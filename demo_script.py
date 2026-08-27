@@ -24,7 +24,7 @@ def demo():
             color = gbit.get_random_color()
             gbit.top(color)
             gbit.bottom(color)
-        elif start >= 2:
+        else:
             print("showing 2 random colors.")
             gbit.top(gbit.get_random_color())
             gbit.bottom(gbit.get_random_color())

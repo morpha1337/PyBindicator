@@ -55,36 +55,25 @@ class GlowBitController:
         self.pixels.show()
 
     def get_random_color(self) -> tuple:
-        index = random.randint(0, 4)
-        if index == 0:
-            return RED
-        elif index == 1:
-            return GREEN
-        elif index == 2:
-            return YELLOW
-        elif index == 3:
-            return MAGENTA
-        elif index == 4:
-            return CYAN
+        return random.choice([RED, GREEN, YELLOW, MAGENTA, CYAN])
 
     def show_notifications(self, colors: list) -> None:
         """Light top/bottom segments for one or two active bin colours."""
-        if len(colors) == 0:
+        if not colors:
             return
-        elif len(colors) == 1:
+        if len(colors) == 1:
             self.top(colors[0])
             self.bottom(colors[0])
             return
-        elif len(colors) == 2:
-            start = random.randint(0, 1)
-            if start == 0:
+        if len(colors) == 2:
+            if random.randint(0, 1) == 0:
                 self.top(colors[0])
                 self.bottom(colors[1])
             else:
                 self.top(colors[1])
                 self.bottom(colors[0])
-        elif len(colors) == 3:
-            raise Exception("Three bins are not supported yet")
+            return
+        raise Exception("Three bins are not supported yet")
 
     def show_loading(self, percent: int) -> None:
         number_lit = (percent * self.num_pixels) / 100

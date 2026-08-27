@@ -71,6 +71,8 @@ def build_pin_alarm(self):
 
 When adding comments, prefer *why* (alert window math, NVM migration, pin deinit) over *what* the next line does.
 
+**Conditionals:** use `if items:` not `if len(items) > 0:`; use `==` not `is` for values; no parentheses around `if`/`while` conditions (`if x:` not `if(x):`); prefer `if`/`return` over unnecessary `else` after an early return.
+
 ## Agent output
 
 When your work is guided by a rule here, cite the section — e.g. *AGENTS.md → Hardware — GlowBit on 5 V*, or *AGENTS.md → General principles — no commits unless asked*.

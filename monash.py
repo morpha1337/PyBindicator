@@ -51,15 +51,18 @@ def get_bin_data(bin_data: dict, wifi_controller) -> list:
     return bins
 
 
+BIN_COLORS = {
+    "Landfill Waste": RED,
+    "Recycling": YELLOW,
+    "Food and Garden Waste": GREEN,
+}
+
+
 def get_bin_color(label: str) -> tuple:
     """Map Monash bin type name to GlowBit RGB tuple."""
-    if label == "Landfill Waste":
-        return RED
-    elif label == "Recycling":
-        return YELLOW
-    elif label == "Food and Garden Waste":
-        return GREEN
-    else:
+    try:
+        return BIN_COLORS[label]
+    except KeyError:
         raise Exception("Unknown bin type")
 
 
@@ -90,11 +93,11 @@ def search_tree_by_tag(needle: str, stack: Element) -> list:
     if stack.tag == needle:
         arr.append(stack)
         return arr
-    else:
-        for subnode in stack:
-            nodes = search_tree_by_tag(needle, subnode)
-            if len(nodes) > 0:
-                arr.extend(nodes)
+
+    for subnode in stack:
+        nodes = search_tree_by_tag(needle, subnode)
+        if nodes:
+            arr.extend(nodes)
 
     return arr
 
@@ -105,10 +108,10 @@ def search_tree_by_attrib(attrib_name: str, attrib_value: str, stack: Element) -
     if value is not None and value == attrib_value:
         arr.append(stack)
         return arr
-    else:
-        for subnode in stack:
-            nodes = search_tree_by_attrib(attrib_name, attrib_value, subnode)
-            if len(nodes) > 0:
-                arr.extend(nodes)
+
+    for subnode in stack:
+        nodes = search_tree_by_attrib(attrib_name, attrib_value, subnode)
+        if nodes:
+            arr.extend(nodes)
 
     return arr

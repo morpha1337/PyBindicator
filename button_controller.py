@@ -56,7 +56,7 @@ class ButtonController:
         self.enable_button()
         while True:
             time.sleep(0.25)
-            if self.button.value is True:
+            if self.button.value:
                 return
 
     def blink(self):
@@ -72,7 +72,7 @@ class ButtonController:
         while True:
             time.sleep(0.25)
             # Pull-up wiring: True = released, False = pressed.
-            if self.button.value is True:
+            if self.button.value:
                 self.led.value = False
                 print("Released")
             else:

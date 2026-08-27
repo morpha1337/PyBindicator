@@ -33,13 +33,13 @@ def struct_time_to_string(value: struct_time) -> str:
 def convert_start_time_to_seconds(value: str) -> int:
     """Convert HH:MM alert_begin to seconds before midnight on collection day."""
     raw_time = value.split(":")
-    return ((24 - int(raw_time[0])) * 60 * 60) + (int(raw_time[1]) * 60)
+    return (24 - int(raw_time[0])) * 60 * 60 + int(raw_time[1]) * 60
 
 
 def convert_end_time_to_seconds(value: str) -> int:
     """Convert HH:MM alert_end to seconds after midnight on collection day."""
     raw_time = value.split(":")
-    return (int(raw_time[0]) * 60 * 60) + (int(raw_time[1]) * 60)
+    return int(raw_time[0]) * 60 * 60 + int(raw_time[1]) * 60
 
 
 def was_woken_normally(next_wake_up_time: struct_time, current_time: struct_time) -> bool:

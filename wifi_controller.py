@@ -19,7 +19,7 @@ class WifiController:
         self.retries = config["retries"]
         self.timeout = config["timeout"]
 
-        if len(self.ssid) == 0 or len(self.password) == 0:
+        if not self.ssid or not self.password:
             raise Exception("WiFi secrets are kept in secrets.py, please add them there!")
 
     def scan_network(self):

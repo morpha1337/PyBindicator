@@ -37,7 +37,7 @@ def start_program(catch_errors: bool):
             # Button press or power glitch — discard stale notification state.
             memory.clear_notifications()
 
-        if len(memory.notifications) == 0:
+        if not memory.notifications:
             bins = convert_json_to_bin(secrets["bins"])
             memory.add_notifications(bins)
             print(len(bins), " bins added into memory from secrets:")
@@ -47,7 +47,7 @@ def start_program(catch_errors: bool):
         active_notifs = get_active_notifications(
             memory.notifications, t_cont.alert_begin, t_cont.alert_end
         )
-        if len(active_notifs) > 0:
+        if active_notifs:
             gbit.show_notifications(active_notifs)
         else:
             gbit.turn_off()

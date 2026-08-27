@@ -35,7 +35,7 @@ class TimeController:
 
         time_alarm = alarm.time.TimeAlarm(monotonic_time=next_wake_time)
 
-        if self.use_external_wake_up is True and pin_alarm is not None:
+        if self.use_external_wake_up and pin_alarm:
             alarm.light_sleep_until_alarms(time_alarm, pin_alarm)
         else:
             alarm.light_sleep_until_alarms(time_alarm)
@@ -54,7 +54,7 @@ class TimeController:
 
         time_alarm = alarm.time.TimeAlarm(monotonic_time=next_wake_time)
 
-        if self.use_external_wake_up is True and pin_alarm is not None:
+        if self.use_external_wake_up and pin_alarm:
             alarm.exit_and_deep_sleep_until_alarms(time_alarm, pin_alarm)
         else:
             alarm.exit_and_deep_sleep_until_alarms(time_alarm)
