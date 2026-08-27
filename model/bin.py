@@ -58,22 +58,24 @@ class Bin:
         return now > alert_start_time and now < alert_end_time
 
     def set_next_collection_date(self) -> None:
+        """Advance next_collection_date by collection_frequency until it is today or later."""
+        if self.collection_frequency <= 0:
+            return
+
         today = get_today_as_epoch()
-        while self.next_collection_date < today:
-            self.next_collection_date += self.collection_frequency
+        next_date = mktime(self.next_collection_date)
+        while next_date < today:
+            next_date += self.collection_frequency
+        self.next_collection_date = localtime(next_date)
 
 
 def convert_json_to_bin(bin_data: list[dict]) -> list[Bin]:
     """Build Bin objects from secrets schedule, advancing dates to the next future pickup."""
     bins: list[Bin] = []
     for raw_bin in bin_data:
-        # Accept both snake_case and legacy camelCase secret keys.
-        start_date_key = "start_date" if "start_date" in raw_bin else "startDate"
-        frequency_key = "frequency_in_days" if "frequency_in_days" in raw_bin else "frequencyInDays"
-
-        start_date = string_to_struct_time(raw_bin[start_date_key])
+        start_date = string_to_struct_time(raw_bin["start_date"])
         start_date_in_seconds_since_epoch = mktime(start_date)
-        frequency_in_seconds = get_days_to_seconds(int(raw_bin[frequency_key]))
+        frequency_in_seconds = get_days_to_seconds(int(raw_bin["frequency_in_days"]))
         today_in_seconds_since_epoch = get_today_as_epoch()
         next_collection_date = start_date_in_seconds_since_epoch
 

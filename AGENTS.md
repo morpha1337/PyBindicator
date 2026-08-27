@@ -342,7 +342,6 @@ From code review and project notes — fix when touching related areas:
 | --- | --- |
 | `app.bindicator.get_next_wake_time` | Loop always advances index to `len(notifications)` → likely index error |
 | `helpers.was_woken_normally` | Compares reset reason strings incorrectly; button wake detection unreliable |
-| `Bin.set_next_collection_date` | Compares `struct_time` to int; invalid date math |
 | `controllers.button.read_button_state` | Debounce not implemented (see Adafruit `debouncer` library) |
 | Hardware | GlowBit heat on 5 V over long periods — consider resistor on 5 V line or lower brightness |
 | 3-bin display | `show_notifications` raises for three simultaneous bins |
