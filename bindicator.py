@@ -1,3 +1,5 @@
+"""Production wake loop: Wi-Fi, schedule, GlowBit display, deep sleep."""
+
 import glow_bit_controller
 import time_controller
 import button_controller
@@ -13,6 +15,7 @@ from microcontroller import reset
 
 
 def start_program(catch_errors: bool):
+    """Run one production cycle, then deep-sleep until the next alarm or button press."""
     button = button_controller.ButtonController(config["button"])
     gbit = glow_bit_controller.GlowBitController(config["glowbit"])
     wifi = wifi_controller.WifiController(secrets, config["wifi"])
@@ -31,6 +34,7 @@ def start_program(catch_errors: bool):
         if woken_up:
             memory.update_notifications()
         else:
+            # Button press or power glitch — discard stale notification state.
             memory.clear_notifications()
 
         if len(memory.notifications) == 0:
@@ -71,10 +75,12 @@ def start_program(catch_errors: bool):
 
 
 def get_active_notifications(bins: list, start_time: int, end_time: int) -> list:
+    """Return bins whose collection date falls within the configured alert window."""
     return list(filter(lambda x: x.is_active(start_time, end_time), bins))
 
 
 def get_next_wake_time(notifications: list):
+    """Return the struct_time of the earliest upcoming collection."""
     def get_next_collection_date(entry):
         return time.mktime(entry.next_collection_date)
 

@@ -1,3 +1,5 @@
+"""Hardware and network test harness (not used in production)."""
+
 import glow_bit_controller
 import time_controller
 import button_controller
@@ -12,6 +14,7 @@ import monash
 
 
 def debug():
+    """Exercise controllers sequentially; blocks forever on button.test_button()."""
     button = button_controller.ButtonController(config["button"])
     gbit = glow_bit_controller.GlowBitController(config["glowbit"])
     wifi = wifi_controller.WifiController(secrets, config["wifi"])
@@ -21,7 +24,7 @@ def debug():
     gbit.top(glow_bit_controller.WHITE)
     gbit.bottom(glow_bit_controller.WHITE)
 
-    # WARNING: this is an execution blocking infinite loop.
+    # WARNING: infinite loop — code below is unreachable until commented out.
     button.test_button()
 
     wifi.connect()

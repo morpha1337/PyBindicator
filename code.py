@@ -1,3 +1,5 @@
+"""CircuitPython entry point; selects PRODUCTION, DEBUG, or SHOW mode."""
+
 import bindicator
 import demo_script
 import debug_script
@@ -8,6 +10,7 @@ SHOW_MODE = "SHOW"
 
 
 def start_bindicator(mode: str):
+    """Dispatch to the selected runtime mode."""
     if mode == PRODUCTION_MODE:
         print("Starting the Bindicator in Production Mode!")
         bindicator.start_program(False)

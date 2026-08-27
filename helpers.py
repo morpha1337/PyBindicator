@@ -1,8 +1,11 @@
+"""Time conversion, alert-window math, and wake-reason helpers."""
+
 from time import struct_time, localtime, mktime
 import microcontroller
 
 
 def string_to_struct_time(value: str) -> struct_time:
+    """Parse Y/M/D/H/M/S/wday/yday/isdst string used in NVM and secrets."""
     if value is None:
         return None
 
@@ -28,30 +31,31 @@ def struct_time_to_string(value: struct_time) -> str:
 
 
 def convert_start_time_to_seconds(value: str) -> int:
+    """Convert HH:MM alert_begin to seconds before midnight on collection day."""
     raw_time = value.split(":")
     return ((24 - int(raw_time[0])) * 60 * 60) + (int(raw_time[1]) * 60)
 
 
 def convert_end_time_to_seconds(value: str) -> int:
+    """Convert HH:MM alert_end to seconds after midnight on collection day."""
     raw_time = value.split(":")
     return (int(raw_time[0]) * 60 * 60) + (int(raw_time[1]) * 60)
 
 
 def was_woken_normally(next_wake_up_time: struct_time, current_time: struct_time) -> bool:
-    # if the next wake time hasnt passed yet then the device was woken by either
-    # the button being pressed or a power fluctuation.
+    """True if wake was from the scheduled deep-sleep alarm, not button or power glitch."""
     valid_reasons = [
         "microcontroller.ResetReason.DEEP_SLEEP_ALARM",
         "microcontroller.ResetReason.RESET_PIN",
     ]
 
-    # todo: test wether this correctly returns when woken from a button.
     print("Reset Caused By: ", microcontroller.cpu.reset_reason)
     reason = microcontroller.cpu.reset_reason
     return reason in valid_reasons
 
 
 def get_today_as_epoch() -> int:
+    """Midnight today as seconds since epoch."""
     today_as_struct = localtime()
     modified_date = struct_time([
         today_as_struct.tm_year,

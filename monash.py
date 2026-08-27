@@ -1,3 +1,5 @@
+"""Parse Monash Council waste HTML embedded in JSON API responses."""
+
 import io
 from ElementTree import parse, Element
 from glow_bit_controller import RED, GREEN, YELLOW
@@ -14,6 +16,7 @@ def test_bin_data(bin_data: dict, wifi_controller) -> list:
 
 
 def get_bin_data(bin_data: dict, wifi_controller) -> list:
+    """Fetch council schedule and return Bin objects with Monash bin colours."""
     try:
         html_result = wifi_controller.call_url_json(bin_data["bin_data_url"])["responseContent"]
         html_result = html_result.replace("\r\n", "")
@@ -49,6 +52,7 @@ def get_bin_data(bin_data: dict, wifi_controller) -> list:
 
 
 def get_bin_color(label: str) -> tuple:
+    """Map Monash bin type name to GlowBit RGB tuple."""
     if label == "Landfill Waste":
         return RED
     elif label == "Recycling":

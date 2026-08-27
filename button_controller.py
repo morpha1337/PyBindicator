@@ -1,3 +1,5 @@
+"""Tactile button on A2 (LED) and A3 (input); supports wake-on-press via PinAlarm."""
+
 import board
 import digitalio
 import time
@@ -5,6 +7,8 @@ import alarm
 
 
 class ButtonController:
+    """Drive the button LED and read press state; pins must be released before sleep."""
+
     button_led_pin = board.A2
     button_pin = board.A3
     led = digitalio.DigitalInOut(button_led_pin)
@@ -18,6 +22,7 @@ class ButtonController:
         self.release_pins()
 
     def release_pins(self):
+        """Deinit GPIO so PinAlarm can bind the button pin."""
         print("Releasing Button bindings...")
         try:
             self.button.deinit()
@@ -26,9 +31,9 @@ class ButtonController:
             print("Button Pins were not initialised. Continuing...")
 
     def build_pin_alarm(self):
+        """Release pins and return a PinAlarm for wake-on-button."""
         self.release_pins()
-        # pin must be released .deinit() before the alarm can be placed.
-        # https://docs.circuitpython.org/en/latest/shared-bindings/alarm/pin/index.html#alarm.pin.PinAlarm
+        # PinAlarm requires the pin be deinit'd first on ESP32-S2.
         return alarm.pin.PinAlarm(pin=self.button_pin, value=False, pull=False)
 
     def enable_button(self):
@@ -43,10 +48,11 @@ class ButtonController:
         self.button.deinit()
 
     def read_button_state(self):
-        # todo add debounce code here
+        # todo: add debounce (see adafruit_debouncer)
         return self.button.value
 
     def await_reset(self) -> None:
+        """Block until the user presses the button (error recovery)."""
         self.enable_button()
         while True:
             time.sleep(0.25)
@@ -61,10 +67,11 @@ class ButtonController:
             time.sleep(0.5)
 
     def test_button(self):
+        """Debug helper: infinite loop printing press state."""
         self.enable_button()
         while True:
             time.sleep(0.25)
-            # strangely the default for the button is True (if not pressed) and False if pressed.
+            # Pull-up wiring: True = released, False = pressed.
             if self.button.value is True:
                 self.led.value = False
                 print("Pressed")

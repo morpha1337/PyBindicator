@@ -1,3 +1,5 @@
+"""Wi-Fi connection, NTP time sync, and HTTP helpers."""
+
 import wifi
 import rtc
 import adafruit_ntp
@@ -9,6 +11,8 @@ from time import struct_time
 
 
 class WifiController:
+    """Connect to the AP and fetch network resources."""
+
     def __init__(self, secrets, config):
         self.ssid = secrets["ssid"]
         self.password = secrets["password"]
@@ -29,6 +33,7 @@ class WifiController:
         print("======================")
 
     def connect(self):
+        """Join the configured AP, retrying up to self.retries times."""
         tries = 1
         connected = False
         print("Connecting to WIFI: %s" % self.ssid)
@@ -45,6 +50,7 @@ class WifiController:
         print("Connected! My IP address is: ", wifi.radio.ipv4_address)
 
     def set_date_time(self, timezone_offset) -> struct_time:
+        """Sync RTC from NTP using the given hours-from-UTC offset."""
         tries = 1
         success = False
         ntp = None

@@ -1,6 +1,4 @@
-# NOTE this files contents will eventually be migrated into glow_bit_controller
-# and it will be deleted.
-# All interaction with the Glowbit should be via the controller.
+"""Legacy GlowBit patterns — migrate into glow_bit_controller then delete."""
 
 import neopixel
 import board

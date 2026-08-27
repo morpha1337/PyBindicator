@@ -1,8 +1,12 @@
+"""Bin collection model and conversion from secrets JSON."""
+
 from time import struct_time, mktime, time, localtime
 from helpers import struct_time_to_string, string_to_struct_time, get_today_as_epoch, get_days_to_seconds
 
 
 class Bin:
+    """One waste stream with label, colour, next collection date, and frequency."""
+
     def __init__(
         self,
         label: str,
@@ -35,6 +39,7 @@ class Bin:
         return expiry_time < time()
 
     def is_active(self, start_time: int = 0, end_time: int = 0) -> bool:
+        """True when now is within the alert window before/after collection."""
         next_collection_date_in_seconds = mktime(self.next_collection_date)
         alert_start_time = next_collection_date_in_seconds - start_time
         alert_end_time = next_collection_date_in_seconds + end_time
@@ -48,8 +53,10 @@ class Bin:
 
 
 def convert_json_to_bin(bin_data: list) -> list:
+    """Build Bin objects from secrets schedule, advancing dates to the next future pickup."""
     bins = []
     for raw_bin in bin_data:
+        # Accept both snake_case and legacy camelCase secret keys.
         start_date_key = "start_date" if "start_date" in raw_bin else "startDate"
         frequency_key = "frequency_in_days" if "frequency_in_days" in raw_bin else "frequencyInDays"
 

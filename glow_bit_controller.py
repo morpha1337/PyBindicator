@@ -1,3 +1,5 @@
+"""GlowBit 1x8 NeoPixel strip on A1; pixels 0-3 top, 4-7 bottom."""
+
 import neopixel
 import board
 import random
@@ -18,6 +20,8 @@ OFF = (0, 0, 0)
 
 
 class GlowBitController:
+    """Control the 8-pixel strip split into top and bottom bin indicators."""
+
     pixel_pin = board.A1
     num_pixels = 8
 
@@ -28,6 +32,7 @@ class GlowBitController:
         )
 
     def top(self, color) -> None:
+        """Set pixels 0-3 to color."""
         self.pixels[0] = color
         self.pixels[1] = color
         self.pixels[2] = color
@@ -35,6 +40,7 @@ class GlowBitController:
         self.pixels.show()
 
     def bottom(self, color) -> None:
+        """Set pixels 4-7 to color."""
         self.pixels[4] = color
         self.pixels[5] = color
         self.pixels[6] = color
@@ -62,6 +68,7 @@ class GlowBitController:
             return CYAN
 
     def show_notifications(self, colors: list) -> None:
+        """Light top/bottom segments for one or two active bin colours."""
         if len(colors) == 0:
             return
         elif len(colors) == 1:
@@ -82,7 +89,7 @@ class GlowBitController:
     def show_loading(self, percent: int) -> None:
         number_lit = (percent * self.num_pixels) / 100
 
-        # no math.round in circuitPython so apply it manually.
+        # CircuitPython has no round(); manual ceil/floor instead.
         if number_lit % 1 >= 0.5:
             number_lit = ceil(number_lit)
         else:

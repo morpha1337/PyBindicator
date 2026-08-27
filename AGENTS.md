@@ -41,6 +41,36 @@ Firmware images and library bundles live in `deps/` (CircuitPython UF2, Adafruit
 - CircuitPython is a **subset of Python**. Confirm libraries exist on [CircuitPython docs](https://docs.circuitpython.org/) before adding dependencies.
 - No compile step: copy `.py` files and `lib/` to the board’s USB drive, then reset.
 
+## Documentation conventions
+
+Firmware runs on flash-constrained hardware — keep documentation **minimal and purposeful**. Adafruit’s [CircuitPython Design Guide](https://docs.circuitpython.org/en/latest/docs/design_guide.html) targets published libraries (Sphinx `:param` docstrings for ReadTheDocs). This project uses a lighter subset.
+
+| Use | When |
+| --- | --- |
+| **Module docstring** (top of file) | One to three lines: what the file does |
+| **Function/method docstring** | Public entry points and non-obvious behaviour |
+| **`#` inline comment** | Hardware quirks, CircuitPython constraints, workarounds |
+| **Skip** | Obvious loops, getters, or code that reads clearly from names |
+
+**Style:** plain triple-quoted strings (`""" ... """`). One-line docstrings for simple functions; a short paragraph only when behaviour needs context.
+
+**Do not** add Sphinx `:param` blocks unless writing a reusable library module. **Do not** comment every line — docstrings cost flash/RAM and are stripped when using `.mpy` bytecode.
+
+**Examples from this repo:**
+
+```python
+"""Production wake loop: Wi-Fi, schedule, lights, deep sleep."""
+
+def start_program(catch_errors: bool):
+    """Run one production cycle then deep-sleep until the next alarm."""
+
+def build_pin_alarm(self):
+    """Release pins and return a PinAlarm for wake-on-button."""
+    # PinAlarm requires the pin be deinit'd first on ESP32-S2.
+```
+
+When adding comments, prefer *why* (alert window math, NVM migration, pin deinit) over *what* the next line does.
+
 ## Agent output
 
 When your work is guided by a rule here, cite the section — e.g. *AGENTS.md → Hardware — GlowBit on 5 V*, or *AGENTS.md → General principles — no commits unless asked*.
