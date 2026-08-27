@@ -36,6 +36,7 @@ Firmware images and library bundles live in `deps/` (CircuitPython UF2, Adafruit
 
 - Keep changes minimal and focused. This is embedded CircuitPython — every import and byte counts.
 - Use **snake_case** for modules, functions, methods, variables, and JSON keys. Use **CapWords** for classes only (`ButtonController`, `GlowBitController`).
+- **Type-annotate all classes:** declare instance attributes on the class body; initialize them in `__init__`; annotate public method parameters and return types.
 - **Never commit real credentials.** Copy `secrets.py.example` to `secrets.py` locally; `secrets.py` is gitignored.
 - Do not create git commits unless the user explicitly asks.
 - CircuitPython is a **subset of Python**. Confirm libraries exist on [CircuitPython docs](https://docs.circuitpython.org/) before adding dependencies.
@@ -73,6 +74,36 @@ When adding comments, prefer *why* (alert window math, NVM migration, pin deinit
 
 **Conditionals:** use `if items:` not `if len(items) > 0:`; use `==` not `is` for values; no parentheses around `if`/`while` conditions (`if x:` not `if(x):`); prefer `if`/`return` over unnecessary `else` after an early return.
 
+## Type annotations
+
+All project classes must document their instance shape and public method signatures.
+
+| Rule | Example |
+| --- | --- |
+| **`from __future__ import annotations`** | At top of each module with class annotations |
+| **Class-body instance attrs** | `notifications: list[Bin]` before methods |
+| **Initialize in `__init__`** | Set defaults there; do not rely on a later loader to create attrs |
+| **Method signatures** | `def connect(self) -> None:` |
+| **Nullable fields** | `last_wake_time: Optional[struct_time]` with `= None` in `__init__` |
+| **Shared aliases** | `Color = tuple` for RGB tuples in `model/bin.py` / `controllers/glow_bit.py` |
+| **Skip `lib/`** | Do not annotate vendored CircuitPython libraries |
+
+Use `try: from typing import Optional` where needed — CircuitPython 9.x includes `typing`, but the import is guarded for compatibility. Annotations are documentation on-device; they are not enforced at runtime.
+
+```python
+from __future__ import annotations
+
+class MemoryController:
+    last_wake_time: Optional[struct_time]
+    notifications: list[Bin]
+
+    def __init__(self) -> None:
+        self.last_wake_time = None
+        self.notifications = []
+```
+
+Do not use bare `json` or module names as types. Prefer `dict`, `list[Bin]`, `struct_time`, and concrete controller classes.
+
 ## Agent output
 
 When your work is guided by a rule here, cite the section — e.g. *AGENTS.md → Hardware — GlowBit on 5 V*, or *AGENTS.md → General principles — no commits unless asked*.
@@ -82,36 +113,55 @@ When your work is guided by a rule here, cite the section — e.g. *AGENTS.md �
 ```
 code.py                 # Entry point; selects PRODUCTION / DEBUG / SHOW mode
 boot.py                 # A0 switch remounts filesystem for dev vs deploy
-bindicator.py           # Main production loop (Wi-Fi, memory, lights, deep sleep)
 config.py               # Non-secret settings (timezone, alert window, Wi-Fi retries)
 secrets.py              # Wi-Fi SSID/password, bin schedule or council API URL (copy from secrets.py.example; gitignored)
 secrets.py.example      # Template for secrets.py — safe to commit
-bin.py                  # Bin model + JSON → Bin conversion
-monash.py               # Monash Council HTML-in-JSON waste API parser
-helpers.py              # Time structs, alert window math, wake-reason helpers
-*_controller.py         # One class per hardware concern (button, glowbit, wifi, time, memory)
-debug_script.py         # Interactive hardware/network tests
-demo_script.py          # Show mode: random colors on button wake
-blink_patterns.py       # Legacy glow patterns — migrate into glow_bit_controller if extending
-lib/                    # Vendored CircuitPython libraries (do not edit casually)
 memory.txt              # Default NVM state template (first boot)
+blink_patterns.py       # Legacy glow patterns — migrate into controllers/glow_bit.py then delete
+
+app/                    # Runtime modes (orchestration)
+  bindicator.py         # Production wake loop (Wi-Fi, memory, lights, deep sleep)
+  debug.py              # Interactive hardware/network tests
+  demo.py               # Show mode: random colours on button wake
+
+controllers/            # Hardware and persistence (one class per module)
+  button.py             # A2 LED, A3 input; PinAlarm wake-on-press
+  glow_bit.py           # NeoPixel strip on A1
+  wifi.py               # Wi-Fi, NTP, HTTP
+  time.py               # Light/deep sleep alarms
+  memory.py             # NVM state via foamyguy_nvm_helper
+
+model/                  # Domain types
+  bin.py                # Bin model + JSON → Bin conversion
+
+helpers/                # Shared utilities (time structs, alert math, wake reason)
+  __init__.py
+
+councils/               # Council-specific schedule parsers
+  monash.py             # Monash Council HTML-in-JSON waste API
+
+fixtures/               # Dev-only sample data (not required on device)
+  monash.txt            # Sample council HTML snippet for parser development
+
+lib/                    # Vendored CircuitPython libraries (do not edit casually)
 deps/                   # Firmware UF2 + Adafruit bundle (not deployed to board)
-monash.txt              # Sample council HTML snippet for parser development
 ```
+
+Each package folder (`app/`, `controllers/`, `model/`, `helpers/`, `councils/`) includes an empty `__init__.py` so CircuitPython can import it as a package from the drive root.
 
 ## Runtime modes (`code.py`)
 
 | Mode constant | Behavior |
 | --- | --- |
-| `PRODUCTION` | `bindicator.start_program(False)` — full schedule, deep sleep, error re-raise |
-| `DEBUG` | `debug_script.debug()` — blocks on button test loop, exercises Wi-Fi/Monash/memory |
-| `SHOW` | `demo_script.demo()` — random top/bottom colors on button press |
+| `PRODUCTION` | `app.bindicator.start_program(False)` — full schedule, deep sleep, error re-raise |
+| `DEBUG` | `app.debug.debug()` — blocks on button test loop, exercises Wi-Fi/Monash/memory |
+| `SHOW` | `app.demo.demo()` — random top/bottom colors on button press |
 
 Change the `start_bindicator(...)` argument at the bottom of `code.py` to switch modes.
 
-## Production workflow (`bindicator.py`)
+## Production workflow (`app/bindicator.py`)
 
-Each wake from deep sleep **restarts the CircuitPython interpreter**. `boot.py` runs first (A0 filesystem toggle), then `code.py` calls `bindicator.start_program(False)`. One production cycle looks like this:
+Each wake from deep sleep **restarts the CircuitPython interpreter**. `boot.py` runs first (A0 filesystem toggle), then `code.py` calls `start_program(False)`. One production cycle looks like this:
 
 ### Production flow diagram
 
@@ -175,7 +225,7 @@ flowchart TD
 3. Determine wake reason (`helpers.was_woken_normally` + `microcontroller.cpu.reset_reason`).
    - Normal scheduled wake → refresh bin dates in memory.
    - Button / power glitch → clear stale notifications.
-4. If no bins in NVM → seed from `secrets['bins']` via `bin.convert_json_to_bin`.
+4. If no bins in NVM → seed from `secrets['bins']` via `model.bin.convert_json_to_bin`.
 5. Filter active bins by alert window (`TimeController.alert_begin` / `alert_end` vs collection date).
 6. Display on GlowBit (`GlowBitController.show_notifications`) or turn off.
 7. Compute next wake time, persist state to NVM, deep sleep until alarm or button.
@@ -186,11 +236,11 @@ Alert window defaults (in `config.py`): lights from **12:00** the day before col
 
 | Module | Responsibility |
 | --- | --- |
-| `glow_bit_controller.py` | NeoPixel on A1; top (pixels 0–3) / bottom (4–7); bin colors RED/YELLOW/GREEN |
-| `button_controller.py` | A2 LED, A3 input; `build_pin_alarm()` for wake-on-press (must `deinit` pins first) |
-| `wifi_controller.py` | Connect, NTP, HTTP GET (`adafruit_requests`), optional JSON |
-| `time_controller.py` | Light/deep sleep via `alarm.time.TimeAlarm` + optional `PinAlarm` |
-| `memory_controller.py` | JSON state in NVM via `foamyguy_nvm_helper`; schema in `memory.txt` |
+| `controllers/glow_bit.py` | NeoPixel on A1; top (pixels 0–3) / bottom (4–7); bin colors RED/YELLOW/GREEN |
+| `controllers/button.py` | A2 LED, A3 input; `build_pin_alarm()` for wake-on-press (must `deinit` pins first) |
+| `controllers/wifi.py` | Connect, NTP, HTTP GET (`adafruit_requests`), optional JSON |
+| `controllers/time.py` | Light/deep sleep via `alarm.time.TimeAlarm` + optional `PinAlarm` |
+| `controllers/memory.py` | JSON state in NVM via `foamyguy_nvm_helper`; schema in `memory.txt` |
 
 ### Bin colors (Monash)
 
@@ -200,7 +250,7 @@ Alert window defaults (in `config.py`): lights from **12:00** the day before col
 | Recycling | Yellow |
 | Food and Garden Waste | Green |
 
-Other councils use different colors — adjust `monash.get_bin_color` or `secrets['bins']` colors accordingly.
+Other councils use different colors — adjust `councils.monash.get_bin_color` or `secrets['bins']` colors accordingly.
 
 ## Configuration
 
@@ -227,7 +277,7 @@ secrets = {
     'bins': [
         {
             'label': 'Landfill Waste',
-            'color': '(255, 0, 0)',       # stored as string; parsed in bin.py
+            'color': '(255, 0, 0)',       # stored as string; parsed in model/bin.py
             'start_date': 'YYYY/MM/DD/H/M/S/wday/yday/isdst',
             'frequency_in_days': 14
         },
@@ -236,17 +286,17 @@ secrets = {
 }
 ```
 
-**Monash Council API:** JSON endpoint returns HTML in `responseContent`. Geolocation ID is address-specific — obtain from [My Area](https://www.monash.vic.gov.au/My-area) network tab. Parser: `monash.py` + vendored `lib/ElementTree.py`.
+**Monash Council API:** JSON endpoint returns HTML in `responseContent`. Geolocation ID is address-specific — obtain from [My Area](https://www.monash.vic.gov.au/My-area) network tab. Parser: `councils/monash.py` + vendored `lib/ElementTree.py`.
 
 Production currently seeds bins from `secrets['bins']` (static schedule). Live council fetch is implemented in `monash.get_bin_data` for debug/experimentation.
 
-NVM JSON uses snake_case keys (`last_wake_time`, `current_notifications`, etc.). `memory_controller.py` still accepts legacy PascalCase keys when loading old NVM state.
+NVM JSON uses snake_case keys (`last_wake_time`, `current_notifications`, etc.) as defined in `memory.txt`.
 
 ## Deploying to the board
 
 1. Install [CircuitPython for QT Py ESP32-S2](https://circuitpython.org/board/adafruit_qtpy_esp32s2/) (see `deps/` for bundled UF2).
 2. Board appears as USB mass storage (`CIRCUITPY`).
-3. Copy project `.py` files, `lib/`, `memory.txt`, and your local `secrets.py` (from `secrets.py.example`) to the drive root.
+3. Copy project folders (`app/`, `controllers/`, `model/`, `helpers/`, `councils/`), root `.py` files (`code.py`, `boot.py`, `config.py`), `lib/`, `memory.txt`, and your local `secrets.py` (from `secrets.py.example`) to the drive root.
 4. Press reset. `code.py` runs automatically.
 
 Optional dev workflow: wire **A0** to ground to allow host writes while running; see [filesystem remount](https://learn.adafruit.com/cpu-temperature-logging-with-circuit-python?view=all#writing-to-the-filesystem).
@@ -258,7 +308,7 @@ Update CircuitPython and libraries periodically — bundled versions are in `dep
 - No full CPython stdlib (no `xml.etree` — project ships minimal `ElementTree.py`).
 - Cooperative multitasking via `asyncio` is possible but Wi-Fi/requests async support was immature when written; boot animations during Wi-Fi connect were deferred.
 - Deep sleep **restarts** the interpreter; preserve state in NVM, not globals.
-- `alarm.pin.PinAlarm` requires the pin be released (`deinit`) before sleep — see `ButtonController.build_pin_alarm`.
+- `alarm.pin.PinAlarm` requires the pin be released (`deinit`) before sleep — see `controllers.button.ButtonController.build_pin_alarm`.
 - Prefer [`alarm` wake reason API](https://learn.adafruit.com/deep-sleep-with-circuitpython/alarms-and-sleep#what-woke-me-up-3079890) over ad-hoc time comparisons where possible.
 
 ## Known issues and backlog
@@ -267,12 +317,11 @@ From code review and project notes — fix when touching related areas:
 
 | Area | Issue |
 | --- | --- |
-| `bindicator.get_next_wake_time` | Loop always advances index to `len(notifications)` → likely index error |
-| `memory_controller.save_to_mem` | Saves `next_wake_time` from `last_wake_time` (copy-paste bug) |
+| `app.bindicator.get_next_wake_time` | Loop always advances index to `len(notifications)` → likely index error |
 | `helpers.was_woken_normally` | Compares reset reason strings incorrectly; button wake detection unreliable |
-| `bin.convert_json_to_bin` | `color` in secrets is a string; may need parsing to tuple |
+| `model.bin.convert_json_to_bin` | `color` in secrets is a string; may need parsing to tuple |
 | `Bin.set_next_collection_date` | Compares `struct_time` to int; invalid date math |
-| `button_controller.read_button_state` | Debounce not implemented (see Adafruit `debouncer` library) |
+| `controllers.button.read_button_state` | Debounce not implemented (see Adafruit `debouncer` library) |
 | Hardware | GlowBit heat on 5 V over long periods — consider resistor on 5 V line or lower brightness |
 | 3-bin display | `show_notifications` raises for three simultaneous bins |
 

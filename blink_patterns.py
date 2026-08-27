@@ -1,4 +1,4 @@
-"""Legacy GlowBit patterns — migrate into glow_bit_controller then delete."""
+"""Legacy GlowBit patterns — migrate into controllers/glow_bit.py then delete."""
 
 import neopixel
 import board

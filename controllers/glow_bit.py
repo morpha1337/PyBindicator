@@ -1,9 +1,12 @@
 """GlowBit 1x8 NeoPixel strip on A1; pixels 0-3 top, 4-7 bottom."""
 
+from __future__ import annotations
+
 import neopixel
 import board
 import random
 from math import ceil, floor
+from model.bin import Bin
 
 RED = (255, 0, 0)
 ORANGE = (255, 34, 0)
@@ -18,6 +21,8 @@ AQUA = (85, 125, 255)
 WHITE = (255, 255, 255)
 OFF = (0, 0, 0)
 
+Color = tuple
+
 
 class GlowBitController:
     """Control the 8-pixel strip split into top and bottom bin indicators."""
@@ -25,13 +30,16 @@ class GlowBitController:
     pixel_pin = board.A1
     num_pixels = 8
 
-    def __init__(self, config):
+    pixel_brightness: float
+    pixels: neopixel.NeoPixel
+
+    def __init__(self, config: dict) -> None:
         self.pixel_brightness = config["brightness"]
         self.pixels = neopixel.NeoPixel(
             self.pixel_pin, self.num_pixels, brightness=self.pixel_brightness
         )
 
-    def top(self, color) -> None:
+    def top(self, color: Color) -> None:
         """Set pixels 0-3 to color."""
         self.pixels[0] = color
         self.pixels[1] = color
@@ -39,7 +47,7 @@ class GlowBitController:
         self.pixels[3] = color
         self.pixels.show()
 
-    def bottom(self, color) -> None:
+    def bottom(self, color: Color) -> None:
         """Set pixels 4-7 to color."""
         self.pixels[4] = color
         self.pixels[5] = color
@@ -50,28 +58,28 @@ class GlowBitController:
     def turn_off(self) -> None:
         self.pixels.fill(OFF)
 
-    def apply(self, pixel_num: int, color: tuple) -> None:
+    def apply(self, pixel_num: int, color: Color) -> None:
         self.pixels[pixel_num] = color
         self.pixels.show()
 
-    def get_random_color(self) -> tuple:
+    def get_random_color(self) -> Color:
         return random.choice([RED, GREEN, YELLOW, MAGENTA, CYAN])
 
-    def show_notifications(self, colors: list) -> None:
-        """Light top/bottom segments for one or two active bin colours."""
-        if not colors:
+    def show_notifications(self, bins: list[Bin]) -> None:
+        """Light top/bottom segments for one or two active bins."""
+        if not bins:
             return
-        if len(colors) == 1:
-            self.top(colors[0])
-            self.bottom(colors[0])
+        if len(bins) == 1:
+            self.top(bins[0].color)
+            self.bottom(bins[0].color)
             return
-        if len(colors) == 2:
+        if len(bins) == 2:
             if random.randint(0, 1) == 0:
-                self.top(colors[0])
-                self.bottom(colors[1])
+                self.top(bins[0].color)
+                self.bottom(bins[1].color)
             else:
-                self.top(colors[1])
-                self.bottom(colors[0])
+                self.top(bins[1].color)
+                self.bottom(bins[0].color)
             return
         raise Exception("Three bins are not supported yet")
 

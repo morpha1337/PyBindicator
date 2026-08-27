@@ -1,27 +1,43 @@
 """Deep/light sleep and alert-window time conversion."""
 
+from __future__ import annotations
+
 import alarm
 import time
 from helpers import convert_start_time_to_seconds, convert_end_time_to_seconds
+
+try:
+    from typing import Optional
+except ImportError:
+    pass
 
 
 class TimeController:
     """Schedule sleep alarms and expose alert window as seconds before/after collection."""
 
-    def __init__(self, config):
+    sleep_time: float
+    use_external_wake_up: bool
+    alert_begin: int
+    alert_end: int
+
+    def __init__(self, config: dict) -> None:
         self.sleep_time = float(config["sleep_time"])
         self.use_external_wake_up = bool(config["use_external_wake_up"])
         # alert_begin/end are seconds before/after midnight on collection day
         self.alert_begin = convert_start_time_to_seconds(str(config["alert_begin"]))
         self.alert_end = convert_end_time_to_seconds(str(config["alert_end"]))
 
-    def sleep(self, next_wake_time: float = None):
+    def sleep(self, next_wake_time: Optional[float] = None) -> None:
         if next_wake_time is None:
             next_wake_time = time.monotonic() + self.sleep_time
 
         time.sleep(next_wake_time)
 
-    def light_sleep(self, next_wake_time: float = None, pin_alarm=None):
+    def light_sleep(
+        self,
+        next_wake_time: Optional[float] = None,
+        pin_alarm: Optional[alarm.pin.PinAlarm] = None,
+    ) -> None:
         """Light sleep until time alarm (and optional button alarm)."""
         if next_wake_time is None:
             next_wake_time = time.monotonic() + self.sleep_time
@@ -40,7 +56,11 @@ class TimeController:
         else:
             alarm.light_sleep_until_alarms(time_alarm)
 
-    def deep_sleep(self, next_wake_time: float = None, pin_alarm=None):
+    def deep_sleep(
+        self,
+        next_wake_time: Optional[float] = None,
+        pin_alarm: Optional[alarm.pin.PinAlarm] = None,
+    ) -> None:
         """Deep sleep; restarts the interpreter on wake."""
         if next_wake_time is None:
             next_wake_time = time.monotonic() + self.sleep_time

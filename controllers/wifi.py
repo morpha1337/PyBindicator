@@ -1,5 +1,7 @@
 """Wi-Fi connection, NTP time sync, and HTTP helpers."""
 
+from __future__ import annotations
+
 import wifi
 import rtc
 import adafruit_ntp
@@ -13,7 +15,12 @@ from time import struct_time
 class WifiController:
     """Connect to the AP and fetch network resources."""
 
-    def __init__(self, secrets, config):
+    ssid: str
+    password: str
+    retries: int
+    timeout: int
+
+    def __init__(self, secrets: dict, config: dict) -> None:
         self.ssid = secrets["ssid"]
         self.password = secrets["password"]
         self.retries = config["retries"]
@@ -22,7 +29,7 @@ class WifiController:
         if not self.ssid or not self.password:
             raise Exception("WiFi secrets are kept in secrets.py, please add them there!")
 
-    def scan_network(self):
+    def scan_network(self) -> None:
         print("Available WiFi networks:")
         for network in wifi.radio.start_scanning_networks():
             print(
@@ -32,7 +39,7 @@ class WifiController:
         wifi.radio.stop_scanning_networks()
         print("======================")
 
-    def connect(self):
+    def connect(self) -> None:
         """Join the configured AP, retrying up to self.retries times."""
         tries = 1
         connected = False
@@ -49,7 +56,7 @@ class WifiController:
         assert connected, "Failed to connect to Wifi with SSID: %s" % self.ssid
         print("Connected! My IP address is: ", wifi.radio.ipv4_address)
 
-    def set_date_time(self, timezone_offset) -> struct_time:
+    def set_date_time(self, timezone_offset: int) -> struct_time:
         """Sync RTC from NTP using the given hours-from-UTC offset."""
         tries = 1
         success = False
@@ -68,13 +75,13 @@ class WifiController:
         print("The current Date Time is: ", ntp.datetime)
         return ntp.datetime
 
-    def print_network_info(self):
+    def print_network_info(self) -> None:
         print("==============")
         print("My MAC address:", [hex(i) for i in wifi.radio.mac_address])
         print("My IP address: ", wifi.radio.ipv4_address)
         print("==============")
 
-    def call_url(self, url) -> str:
+    def call_url(self, url: str) -> str:
         pool = socketpool.SocketPool(wifi.radio)
         requests = adafruit_requests.Session(pool, ssl.create_default_context())
 
@@ -84,7 +91,7 @@ class WifiController:
         response.close()
         return result
 
-    def call_url_json(self, url) -> dict:
+    def call_url_json(self, url: str) -> dict:
         pool = socketpool.SocketPool(wifi.radio)
         requests = adafruit_requests.Session(pool, ssl.create_default_context())
 
@@ -94,7 +101,7 @@ class WifiController:
         response.close()
         return result
 
-    def ping(self, ipaddress) -> None:
+    def ping(self, ipaddress: str) -> None:
         ipv4 = ipaddress.ip_address(ipaddress)
         pingres = wifi.radio.ping(ipv4) * 1000
         if pingres > 0:

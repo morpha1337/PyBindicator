@@ -1,10 +1,17 @@
 """Time conversion, alert-window math, and wake-reason helpers."""
 
+from __future__ import annotations
+
 from time import struct_time, localtime, mktime
 import microcontroller
 
+try:
+    from typing import Optional
+except ImportError:
+    pass
 
-def string_to_struct_time(value: str) -> struct_time:
+
+def string_to_struct_time(value: Optional[str]) -> Optional[struct_time]:
     """Parse Y/M/D/H/M/S/wday/yday/isdst string used in NVM and secrets."""
     if value is None:
         return None
@@ -14,7 +21,7 @@ def string_to_struct_time(value: str) -> struct_time:
     return struct_time(int_array)
 
 
-def struct_time_to_string(value: struct_time) -> str:
+def struct_time_to_string(value: Optional[struct_time]) -> Optional[str]:
     if value is None:
         return None
 
@@ -27,7 +34,8 @@ def struct_time_to_string(value: struct_time) -> str:
         value.tm_sec,
         value.tm_wday,
         value.tm_yday,
-        value.tm_isdst)
+        value.tm_isdst,
+    )
 
 
 def convert_start_time_to_seconds(value: str) -> int:
@@ -42,7 +50,10 @@ def convert_end_time_to_seconds(value: str) -> int:
     return int(raw_time[0]) * 60 * 60 + int(raw_time[1]) * 60
 
 
-def was_woken_normally(next_wake_up_time: struct_time, current_time: struct_time) -> bool:
+def was_woken_normally(
+    next_wake_up_time: Optional[struct_time],
+    current_time: struct_time,
+) -> bool:
     """True if wake was from the scheduled deep-sleep alarm, not button or power glitch."""
     valid_reasons = [
         "microcontroller.ResetReason.DEEP_SLEEP_ALARM",

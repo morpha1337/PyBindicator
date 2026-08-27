@@ -1,28 +1,30 @@
 """Hardware and network test harness (not used in production)."""
 
-import glow_bit_controller
-import time_controller
-import button_controller
-import wifi_controller
-import memory_controller
+from __future__ import annotations
+
 from secrets import secrets
 from config import config
-from bin import Bin
+from model.bin import Bin
+from controllers.button import ButtonController
+from controllers.glow_bit import GlowBitController, WHITE, YELLOW
+from controllers.wifi import WifiController
+from controllers.time import TimeController
+from controllers.memory import MemoryController
+from councils import monash
 
 import time
-import monash
 
 
-def debug():
+def debug() -> None:
     """Exercise controllers sequentially; blocks forever on button.test_button()."""
-    button = button_controller.ButtonController(config["button"])
-    gbit = glow_bit_controller.GlowBitController(config["glowbit"])
-    wifi = wifi_controller.WifiController(secrets, config["wifi"])
-    t_cont = time_controller.TimeController(config["time"])
-    memory = memory_controller.MemoryController()
+    button = ButtonController(config["button"])
+    gbit = GlowBitController(config["glowbit"])
+    wifi = WifiController(secrets, config["wifi"])
+    t_cont = TimeController(config["time"])
+    memory = MemoryController()
 
-    gbit.top(glow_bit_controller.WHITE)
-    gbit.bottom(glow_bit_controller.WHITE)
+    gbit.top(WHITE)
+    gbit.bottom(WHITE)
 
     # WARNING: infinite loop — code below is unreachable until commented out.
     button.test_button()
@@ -43,7 +45,7 @@ def debug():
 
     memory.clear_notifications()
     memory.add_notification(
-        Bin("test3", time.localtime(time.time()), glow_bit_controller.YELLOW, 0)
+        Bin("test3", time.localtime(time.time()), YELLOW, 0)
     )
     memory.save_to_mem()
 

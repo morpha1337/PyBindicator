@@ -1,30 +1,35 @@
 """Persist bin schedule and wake times in NVM via foamyguy_nvm_helper."""
 
+from __future__ import annotations
+
 import json
 from time import struct_time
+
 import foamyguy_nvm_helper as nvm_helper
-from bin import Bin
+from model.bin import Bin
 from helpers import struct_time_to_string, string_to_struct_time
 
-
-def _state_key(state: dict, new_key: str, old_key: str):
-    """Read a JSON key, falling back to legacy PascalCase names."""
-    if new_key in state:
-        return state[new_key]
-    return state.get(old_key)
-
-
-def _bin_field(notif: dict, new_key: str, old_key: str):
-    if new_key in notif:
-        return notif[new_key]
-    return notif[old_key]
+try:
+    from typing import Optional
+except ImportError:
+    pass
 
 
 class MemoryController:
     """Load and save notification state across deep-sleep restarts."""
 
-    def __init__(self):
+    _state: Optional[dict]
+    last_wake_time: Optional[struct_time]
+    next_wake_time: Optional[struct_time]
+    notification_expiry_time: Optional[struct_time]
+    notifications: list[Bin]
+
+    def __init__(self) -> None:
         self._state = None
+        self.last_wake_time = None
+        self.next_wake_time = None
+        self.notification_expiry_time = None
+        self.notifications = []
         self.load_from_mem()
 
     def save_to_mem(self) -> None:
@@ -35,7 +40,7 @@ class MemoryController:
 
         json_obj = {
             "last_wake_time": struct_time_to_string(self.last_wake_time),
-            "next_wake_time": struct_time_to_string(self.last_wake_time),
+            "next_wake_time": struct_time_to_string(self.next_wake_time),
             "notification_expiry_time": struct_time_to_string(self.notification_expiry_time),
             "current_notifications": notifs,
         }
@@ -51,29 +56,18 @@ class MemoryController:
             encoded_string = nvm_helper.read_data()
             print(encoded_string)
             self._state = json.loads(encoded_string)
-            self.last_wake_time = string_to_struct_time(
-                _state_key(self._state, "last_wake_time", "LastWakeTime")
-            )
-            self.next_wake_time = string_to_struct_time(
-                _state_key(self._state, "next_wake_time", "NextWakeTime")
-            )
+            self.last_wake_time = string_to_struct_time(self._state["last_wake_time"])
+            self.next_wake_time = string_to_struct_time(self._state["next_wake_time"])
             self.notification_expiry_time = string_to_struct_time(
-                _state_key(self._state, "notification_expiry_time", "NotificationExpiryTime")
-            )
-            notifications_key = (
-                "current_notifications"
-                if "current_notifications" in self._state
-                else "CurrentNotifications"
+                self._state["notification_expiry_time"]
             )
             self.notifications = []
-            for notif in self._state[notifications_key]:
+            for notif in self._state["current_notifications"]:
                 new_bin = Bin(
-                    _bin_field(notif, "label", "Label"),
-                    string_to_struct_time(
-                        _bin_field(notif, "next_collection_date", "NextCollectionDate")
-                    ),
-                    _bin_field(notif, "color", "Color"),
-                    _bin_field(notif, "collection_frequency", "CollectionFrequency"),
+                    notif["label"],
+                    string_to_struct_time(notif["next_collection_date"]),
+                    notif["color"],
+                    notif["collection_frequency"],
                 )
                 self.notifications.append(new_bin)
 
@@ -88,7 +82,7 @@ class MemoryController:
             print("[ValueError] memory state error; re-loaded default memory state")
             self.initialize_memory_state()
 
-    def initialize_memory_state(self):
+    def initialize_memory_state(self) -> None:
         """Copy defaults from memory.txt into NVM."""
         with open("memory.txt", "r") as file:
             encoded_string = file.read()
@@ -104,7 +98,7 @@ class MemoryController:
     def add_notification(self, new_bin: Bin) -> None:
         self.notifications.append(new_bin)
 
-    def add_notifications(self, new_bins: list) -> None:
+    def add_notifications(self, new_bins: list[Bin]) -> None:
         for new_bin in new_bins:
             self.notifications.append(new_bin)
 

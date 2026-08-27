@@ -1,18 +1,20 @@
 """Show/demo mode: random GlowBit colours on each button wake."""
 
-import glow_bit_controller
-import time_controller
-import button_controller
+from __future__ import annotations
+
 import random
 import time
 from config import config
+from controllers.button import ButtonController
+from controllers.glow_bit import GlowBitController
+from controllers.time import TimeController
 
 
-def demo():
+def demo() -> None:
     """Light random top/bottom colours, then light-sleep until button press."""
-    button = button_controller.ButtonController(config["button"])
-    gbit = glow_bit_controller.GlowBitController(config["glowbit"])
-    t_cont = time_controller.TimeController(config["time"])
+    button = ButtonController(config["button"])
+    gbit = GlowBitController(config["glowbit"])
+    t_cont = TimeController(config["time"])
 
     while True:
         print("=" * 10)
