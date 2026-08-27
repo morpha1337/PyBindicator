@@ -1,6 +1,6 @@
 {
-    "LastWakeTime": "2023/01/17/21/36/28/1/17/-1",
-    "NextWakeTime": "2023/01/19/21/36/28/1/17/-1",
-    "NotificationExpiryTime": null,
-    "CurrentNotifications": []
+    "last_wake_time": "2023/01/17/21/36/28/1/17/-1",
+    "next_wake_time": "2023/01/19/21/36/28/1/17/-1",
+    "notification_expiry_time": null,
+    "current_notifications": []
 }

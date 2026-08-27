@@ -1,0 +1,74 @@
+from time import struct_time, mktime, time, localtime
+from helpers import struct_time_to_string, string_to_struct_time, get_today_as_epoch, get_days_to_seconds
+
+
+class Bin:
+    def __init__(
+        self,
+        label: str,
+        next_collection_date: struct_time,
+        color: tuple,
+        collection_frequency: int,
+    ):
+        self.label = label
+        self.next_collection_date = next_collection_date
+        self.color = color
+        self.collection_frequency = collection_frequency
+
+    def __str__(self):
+        return "Label: %s, NextCollectionDate: %s, Color: %s" % (
+            self.label,
+            self.next_collection_date,
+            self.color,
+        )
+
+    def to_json(self) -> dict:
+        return {
+            "label": self.label,
+            "color": self.color,
+            "next_collection_date": struct_time_to_string(self.next_collection_date),
+            "collection_frequency": self.collection_frequency,
+        }
+
+    def has_expired(self, end_time: int = 0) -> bool:
+        expiry_time = mktime(self.next_collection_date) + end_time
+        return expiry_time < time()
+
+    def is_active(self, start_time: int = 0, end_time: int = 0) -> bool:
+        next_collection_date_in_seconds = mktime(self.next_collection_date)
+        alert_start_time = next_collection_date_in_seconds - start_time
+        alert_end_time = next_collection_date_in_seconds + end_time
+        now = time()
+        return now > alert_start_time and now < alert_end_time
+
+    def set_next_collection_date(self) -> None:
+        today = get_today_as_epoch()
+        while self.next_collection_date < today:
+            self.next_collection_date += self.collection_frequency
+
+
+def convert_json_to_bin(bin_data: list) -> list:
+    bins = []
+    for raw_bin in bin_data:
+        start_date_key = "start_date" if "start_date" in raw_bin else "startDate"
+        frequency_key = "frequency_in_days" if "frequency_in_days" in raw_bin else "frequencyInDays"
+
+        start_date = string_to_struct_time(raw_bin[start_date_key])
+        start_date_in_seconds_since_epoch = mktime(start_date)
+        frequency_in_seconds = get_days_to_seconds(int(raw_bin[frequency_key]))
+        today_in_seconds_since_epoch = get_today_as_epoch()
+        next_collection_date = start_date_in_seconds_since_epoch
+
+        while next_collection_date < today_in_seconds_since_epoch:
+            next_collection_date += frequency_in_seconds
+
+        next_collection_date_as_struct = localtime(next_collection_date)
+        new_bin = Bin(
+            raw_bin["label"],
+            next_collection_date_as_struct,
+            raw_bin["color"],
+            frequency_in_seconds,
+        )
+        bins.append(new_bin)
+
+    return bins

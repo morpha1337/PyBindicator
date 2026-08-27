@@ -1,21 +1,22 @@
-import Bindicator
-import DemoScript
-import DebugScript
+import bindicator
+import demo_script
+import debug_script
 
-Production_Mode = "PRODUCTION"
-Debug_Mode = "DEBUG"
-Show_Mode = "SHOW"
+PRODUCTION_MODE = "PRODUCTION"
+DEBUG_MODE = "DEBUG"
+SHOW_MODE = "SHOW"
 
-def StartBindicator(mode: str):
-    if(mode is Production_Mode):
+
+def start_bindicator(mode: str):
+    if mode == PRODUCTION_MODE:
         print("Starting the Bindicator in Production Mode!")
-        Bindicator.startProgram(False)
-    elif (mode is Debug_Mode):
+        bindicator.start_program(False)
+    elif mode == DEBUG_MODE:
         print("Starting the Bindicator in Debug Mode!")
-        DebugScript.Debug()
-    elif (mode is Show_Mode):
+        debug_script.debug()
+    elif mode == SHOW_MODE:
         print("Starting the Bindicator in SHOW Mode!")
-        DemoScript.Demo()
+        demo_script.demo()
 
 
-StartBindicator(Production_Mode)
+start_bindicator(PRODUCTION_MODE)
