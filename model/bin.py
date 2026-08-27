@@ -23,6 +23,8 @@ class Bin:
         color: Color,
         collection_frequency: int,
     ) -> None:
+        if not isinstance(color, tuple) or len(color) != 3:
+            raise TypeError("color must be an RGB tuple (r, g, b)")
         self.label = label
         self.next_collection_date = next_collection_date
         self.color = color

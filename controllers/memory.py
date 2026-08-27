@@ -66,7 +66,7 @@ class MemoryController:
                 new_bin = Bin(
                     notif["label"],
                     string_to_struct_time(notif["next_collection_date"]),
-                    notif["color"],
+                    tuple(notif["color"]),
                     notif["collection_frequency"],
                 )
                 self.notifications.append(new_bin)

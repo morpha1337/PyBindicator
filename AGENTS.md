@@ -300,7 +300,7 @@ secrets = {
     'bins': [
         {
             'label': 'Landfill Waste',
-            'color': '(255, 0, 0)',       # stored as string; parsed in model/bin.py
+            'color': (255, 0, 0),         # RGB tuple — required by Bin
             'start_date': 'YYYY/MM/DD/H/M/S/wday/yday/isdst',
             'frequency_in_days': 14
         },
@@ -342,7 +342,6 @@ From code review and project notes — fix when touching related areas:
 | --- | --- |
 | `app.bindicator.get_next_wake_time` | Loop always advances index to `len(notifications)` → likely index error |
 | `helpers.was_woken_normally` | Compares reset reason strings incorrectly; button wake detection unreliable |
-| `model.bin.convert_json_to_bin` | `color` in secrets is a string; may need parsing to tuple |
 | `Bin.set_next_collection_date` | Compares `struct_time` to int; invalid date math |
 | `controllers.button.read_button_state` | Debounce not implemented (see Adafruit `debouncer` library) |
 | Hardware | GlowBit heat on 5 V over long periods — consider resistor on 5 V line or lower brightness |
