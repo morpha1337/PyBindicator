@@ -32,6 +32,29 @@ Project by Dan Murphy and Simon Butler, based on an original idea by Darren Tarb
 
 Firmware images and library bundles live in `deps/` (CircuitPython UF2, Adafruit bundle zip).
 
+## Target firmware
+
+**Minimum supported version** — the project may run on newer CircuitPython releases; treat the versions below as the baseline when recommending language/stdlib features.
+
+| Item | Value |
+| --- | --- |
+| **Board** | Adafruit QT Py ESP32-S2 |
+| **CircuitPython (minimum)** | **9.2.9** (`deps/adafruit-circuitpython-adafruit_qtpy_esp32s2-*-9.2.9.uf2`) |
+| **Library bundle (minimum)** | 9.x (`deps/adafruit-circuitpython-bundle-9.x-*.zip`) |
+| **Docs** | [CircuitPython 9.2.x shared bindings](https://docs.circuitpython.org/en/9.2.x/) — use docs for the version actually flashed when it is newer |
+
+When suggesting stdlib or syntax features, verify they exist on **at least 9.2.x** for ESP32-S2 — not desktop Python 3.11+. Do not assume features from a newer CP build unless *Target firmware* has been updated after an upgrade.
+
+| Feature | On 9.2.9+ (minimum) |
+| --- | --- |
+| `match` / `case` | Yes (since CP 8) |
+| `enum.IntEnum` | Yes — firmware built-in; not in the Adafruit library bundle |
+| `typing` | Yes |
+| `StrEnum` | **No** — CPython 3.11+ only; not in CircuitPython stdlib (recheck after upgrades) |
+| Full CPython stdlib | No — subset only; see *CircuitPython constraints* below |
+
+After flashing a newer UF2 or bundle, bump the minimum version here if the project adopts it.
+
 ## General principles
 
 - Keep changes minimal and focused. This is embedded CircuitPython — every import and byte counts.
@@ -153,11 +176,11 @@ Each package folder (`app/`, `controllers/`, `model/`, `helpers/`, `councils/`) 
 
 | Mode constant | Behavior |
 | --- | --- |
-| `PRODUCTION` | `app.bindicator.start_program(False)` — full schedule, deep sleep, error re-raise |
-| `DEBUG` | `app.debug.debug()` — blocks on button test loop, exercises Wi-Fi/Monash/memory |
-| `SHOW` | `app.demo.demo()` — random top/bottom colors on button press |
+| `RunMode.PRODUCTION` | `app.bindicator.start_program(False)` — full schedule, deep sleep, error re-raise |
+| `RunMode.DEBUG` | `app.debug.debug()` — blocks on button test loop, exercises Wi-Fi/Monash/memory |
+| `RunMode.SHOW` | `app.demo.demo()` — random top/bottom colors on button press |
 
-Change the `start_bindicator(...)` argument at the bottom of `code.py` to switch modes.
+Change the `start_bindicator(...)` argument at the bottom of `code.py` to switch modes (e.g. `RunMode.DEBUG`).
 
 ## Production workflow (`app/bindicator.py`)
 
@@ -301,7 +324,7 @@ NVM JSON uses snake_case keys (`last_wake_time`, `current_notifications`, etc.) 
 
 Optional dev workflow: wire **A0** to ground to allow host writes while running; see [filesystem remount](https://learn.adafruit.com/cpu-temperature-logging-with-circuit-python?view=all#writing-to-the-filesystem).
 
-Update CircuitPython and libraries periodically — bundled versions are in `deps/`.
+Update CircuitPython and libraries periodically — bundled versions are in `deps/`. When the project adopts a newer release, raise the minimum in *Target firmware*.
 
 ## CircuitPython constraints
 
