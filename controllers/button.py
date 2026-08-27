@@ -18,16 +18,17 @@ class ButtonController:
 
     button_led_pin = board.A2
     button_pin = board.A3
-    led = digitalio.DigitalInOut(button_led_pin)
-    led.direction = digitalio.Direction.OUTPUT
 
     debounce: int
+    led: digitalio.DigitalInOut
     button: Optional[digitalio.DigitalInOut]
 
     def __init__(self, config: dict) -> None:
         self.debounce = config["debounce"]
-        self.button = None
+        self.led = digitalio.DigitalInOut(self.button_led_pin)
+        self.led.direction = digitalio.Direction.OUTPUT
         self.led.value = False
+        self.button = None
 
     def __del__(self) -> None:
         self.release_pins()
@@ -35,11 +36,10 @@ class ButtonController:
     def release_pins(self) -> None:
         """Deinit GPIO so PinAlarm can bind the button pin."""
         print("Releasing Button bindings...")
-        try:
+        if self.button is not None:
             self.button.deinit()
-            self.led.deinit()
-        except AttributeError:
-            print("Button pins were not initialized. Continuing...")
+            self.button = None
+        self.led.deinit()
 
     def build_pin_alarm(self) -> alarm.pin.PinAlarm:
         """Release pins and return a PinAlarm for wake-on-button."""
@@ -56,7 +56,9 @@ class ButtonController:
     def disable_button(self) -> None:
         print("disabled button")
         self.led.value = False
-        self.button.deinit()
+        if self.button is not None:
+            self.button.deinit()
+            self.button = None
 
     def read_button_state(self) -> bool:
         # todo: add debounce (see adafruit_debouncer)
@@ -67,7 +69,7 @@ class ButtonController:
         self.enable_button()
         while True:
             time.sleep(0.25)
-            if self.button.value:
+            if not self.button.value:
                 return
 
     def blink(self) -> None:
@@ -77,10 +79,12 @@ class ButtonController:
             self.led.value = False
             time.sleep(0.5)
 
-    def test_button(self) -> None:
-        """Debug helper: infinite loop printing press state."""
+    def test_button(self, duration_seconds: float = 10) -> None:
+        """Debug helper: print press state for a fixed duration."""
         self.enable_button()
-        while True:
+        end_time = time.monotonic() + duration_seconds
+        print("Button test for %s seconds (pull-up: Pressed/Released)..." % duration_seconds)
+        while time.monotonic() < end_time:
             time.sleep(0.25)
             # Pull-up wiring: True = released, False = pressed.
             if self.button.value:
@@ -89,3 +93,4 @@ class ButtonController:
             else:
                 print("Pressed")
                 self.led.value = True
+        self.disable_button()

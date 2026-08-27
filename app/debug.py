@@ -16,26 +16,34 @@ import time
 
 
 def debug() -> None:
-    """Exercise controllers sequentially; blocks forever on button.test_button()."""
+    """Run hardware and network checks as a sequential checklist."""
+    print("=== Bindicator debug checklist ===")
+
+    print("[1/8] Init controllers...")
     button = ButtonController(config["button"])
     gbit = GlowBitController(config["glowbit"])
     wifi = WifiController(secrets, config["wifi"])
     t_cont = TimeController(config["time"])
     memory = MemoryController()
 
+    print("[2/8] GlowBit startup (white)...")
     gbit.top(WHITE)
     gbit.bottom(WHITE)
 
-    # WARNING: infinite loop — code below is unreachable until commented out.
-    button.test_button()
-
+    print("[3/8] Wi-Fi connect...")
     wifi.connect()
+
+    print("[4/8] NTP sync...")
     current_time = wifi.set_date_time(config["timezone_offset"])
+
+    print("[5/8] Wi-Fi HTTP test...")
     wifi.test_wifi()
 
+    print("[6/8] NVM last wake time...")
     print("Last Boot Time Was: ", memory.last_wake_time)
     memory.last_wake_time = current_time
 
+    print("[7/8] Monash schedule + active bins on GlowBit...")
     bins = monash.get_bin_data(secrets["bin_data"], wifi)
     active_bins = list(
         filter(lambda x: x.is_active(t_cont.alert_begin, t_cont.alert_end), bins)
@@ -49,5 +57,9 @@ def debug() -> None:
     )
     memory.save_to_mem()
 
+    print("[8/8] Button press test...")
+    button.test_button(10)
+
+    print("=== Checklist complete — light sleep 5s (button wake enabled) ===")
     pin_alarm = button.build_pin_alarm()
     t_cont.light_sleep(5, pin_alarm)

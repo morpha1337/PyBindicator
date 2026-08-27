@@ -144,7 +144,7 @@ blink_patterns.py       # Legacy glow patterns — migrate into controllers/glow
 
 app/                    # Runtime modes (orchestration)
   bindicator.py         # Production wake loop (Wi-Fi, memory, lights, deep sleep)
-  debug.py              # Interactive hardware/network tests
+  debug.py              # Sequential hardware/network checklist
   demo.py               # Show mode: random colours on button wake
 
 controllers/            # Hardware and persistence (one class per module)
@@ -177,7 +177,7 @@ Each package folder (`app/`, `controllers/`, `model/`, `helpers/`, `councils/`) 
 | Mode constant | Behavior |
 | --- | --- |
 | `RunMode.PRODUCTION` | `app.bindicator.start_program(False)` — full schedule, deep sleep, error re-raise |
-| `RunMode.DEBUG` | `app.debug.debug()` — blocks on button test loop, exercises Wi-Fi/Monash/memory |
+| `RunMode.DEBUG` | `app.debug.debug()` — sequential checklist (Wi-Fi, Monash, memory, button test) |
 | `RunMode.SHOW` | `app.demo.demo()` — random top/bottom colors on button press |
 
 Change the `start_bindicator(...)` argument at the bottom of `code.py` to switch modes (e.g. `RunMode.DEBUG`).
@@ -353,7 +353,7 @@ Low-priority / nice-to-have from notes: CPU temperature probe, email error repor
 1. Decide mode: production schedule vs council API vs static `secrets['bins']`.
 2. Update `config.py` and/or `secrets.py` (never commit real secrets).
 3. If NVM schema changes, update `memory.txt` defaults and handle migration in `MemoryController`.
-4. Test on device in `DEBUG` before `PRODUCTION` — debug mode blocks on button test unless that section is commented out.
+4. Test on device in `DEBUG` before `PRODUCTION`.
 5. Copy to `CIRCUITPY` and reset; use serial REPL (Mu or equivalent) for `print` output.
 
 ## Reference links
