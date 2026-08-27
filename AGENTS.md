@@ -36,7 +36,7 @@ Firmware images and library bundles live in `deps/` (CircuitPython UF2, Adafruit
 
 - Keep changes minimal and focused. This is embedded CircuitPython — every import and byte counts.
 - Use **snake_case** for modules, functions, methods, variables, and JSON keys. Use **CapWords** for classes only (`ButtonController`, `GlowBitController`).
-- **Never commit real credentials.** `secrets.py` holds Wi-Fi and council URLs; treat it like `.env`. Prefer a `secrets.py.example` pattern if adding new secret keys.
+- **Never commit real credentials.** Copy `secrets.py.example` to `secrets.py` locally; `secrets.py` is gitignored.
 - Do not create git commits unless the user explicitly asks.
 - CircuitPython is a **subset of Python**. Confirm libraries exist on [CircuitPython docs](https://docs.circuitpython.org/) before adding dependencies.
 - No compile step: copy `.py` files and `lib/` to the board’s USB drive, then reset.
@@ -84,7 +84,8 @@ code.py                 # Entry point; selects PRODUCTION / DEBUG / SHOW mode
 boot.py                 # A0 switch remounts filesystem for dev vs deploy
 bindicator.py           # Main production loop (Wi-Fi, memory, lights, deep sleep)
 config.py               # Non-secret settings (timezone, alert window, Wi-Fi retries)
-secrets.py              # Wi-Fi SSID/password, bin schedule or council API URL (local only)
+secrets.py              # Wi-Fi SSID/password, bin schedule or council API URL (copy from secrets.py.example; gitignored)
+secrets.py.example      # Template for secrets.py — safe to commit
 bin.py                  # Bin model + JSON → Bin conversion
 monash.py               # Monash Council HTML-in-JSON waste API parser
 helpers.py              # Time structs, alert window math, wake-reason helpers
@@ -245,7 +246,7 @@ NVM JSON uses snake_case keys (`last_wake_time`, `current_notifications`, etc.).
 
 1. Install [CircuitPython for QT Py ESP32-S2](https://circuitpython.org/board/adafruit_qtpy_esp32s2/) (see `deps/` for bundled UF2).
 2. Board appears as USB mass storage (`CIRCUITPY`).
-3. Copy project `.py` files, `lib/`, `memory.txt`, and local `secrets.py` to the drive root.
+3. Copy project `.py` files, `lib/`, `memory.txt`, and your local `secrets.py` (from `secrets.py.example`) to the drive root.
 4. Press reset. `code.py` runs automatically.
 
 Optional dev workflow: wire **A0** to ground to allow host writes while running; see [filesystem remount](https://learn.adafruit.com/cpu-temperature-logging-with-circuit-python?view=all#writing-to-the-filesystem).
