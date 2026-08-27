@@ -78,6 +78,65 @@ Change the `start_bindicator(...)` argument at the bottom of `code.py` to switch
 
 ## Production workflow (`bindicator.py`)
 
+Each wake from deep sleep **restarts the CircuitPython interpreter**. `boot.py` runs first (A0 filesystem toggle), then `code.py` calls `bindicator.start_program(False)`. One production cycle looks like this:
+
+### Production flow diagram
+
+```mermaid
+flowchart TD
+    Wake([Wake: power-on, time alarm, or button press])
+    Boot[boot.py — optional A0 filesystem remount]
+    Entry[code.py — start_bindicator PRODUCTION]
+    Init[Init controllers + load NVM state]
+    Startup[GlowBit: white top and bottom]
+    WiFi[Connect Wi-Fi]
+    NTP[Sync time via NTP]
+    WakeReason{Scheduled wake?}
+    UpdateBins[Advance bin collection dates in NVM]
+    ClearBins[Clear notifications from NVM]
+    Empty{Any bins in memory?}
+    Seed[Seed bins from secrets.py schedule]
+    Filter[Filter bins in alert window]
+    Active{Any active bins?}
+    ShowLights[GlowBit: show bin colours]
+    LightsOff[GlowBit: turn off]
+    NextWake[Compute next wake time]
+    Save[Save state to NVM]
+    PinAlarm[Release button pins; arm PinAlarm]
+    Sleep[Deep sleep until time alarm or button]
+    Error[Exception: GlowBit solid red]
+    Rethrow[Re-raise — production catch_errors=False]
+
+    Wake --> Boot --> Entry --> Init --> Startup --> WiFi --> NTP --> WakeReason
+    WakeReason -->|yes — was_woken_normally| UpdateBins --> Empty
+    WakeReason -->|no — button or power glitch| ClearBins --> Empty
+    Empty -->|no bins stored| Seed --> Filter
+    Empty -->|bins present| Filter
+    Filter --> Active
+    Active -->|yes| ShowLights --> NextWake
+    Active -->|no| LightsOff --> NextWake
+    NextWake --> Save --> PinAlarm --> Sleep
+    Sleep -.->|wake restarts interpreter| Wake
+
+    WiFi -.->|failure| Error
+    NTP -.->|failure| Error
+    Save -.->|failure| Error
+    Error --> Rethrow
+
+    style Wake fill:#e8f4fc
+    style Sleep fill:#e8f4fc
+    style ShowLights fill:#fff3cd
+    style Error fill:#f8d7da
+```
+
+**Alert window** (default in `config.py`): from **12:00 the day before** collection through **12:00 on collection day**. A bin is “active” when the current time falls in that window relative to its next collection date.
+
+**Wake sources during sleep:** `TimeAlarm` (next scheduled check) and optionally `PinAlarm` on the button (when `time.use_external_wake_up` is true).
+
+**What production does not do:** live council API fetch (`monash.get_bin_data`) — schedules come from static `secrets['bins']`. DEBUG mode exercises the council parser.
+
+### Steps (reference)
+
 1. Boot controllers; show white on GlowBit top/bottom during startup.
 2. Connect Wi-Fi (`WifiController`), sync time via NTP (`config['timezone_offset']`, default GMT+10).
 3. Determine wake reason (`helpers.was_woken_normally` + `microcontroller.cpu.reset_reason`).
