@@ -61,7 +61,7 @@ class WifiController:
                 rtc.RTC().datetime = ntp.datetime
                 success = True
             except OSError as e:
-                print("[ERROR] couldnt get time, retrying: ", e, ", Attempts: ", tries)
+                print("[ERROR] could not get time, retrying: ", e, ", Attempts: ", tries)
                 tries += 1
                 continue
 

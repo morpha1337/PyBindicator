@@ -84,7 +84,7 @@ class GlowBitController:
                 self.top(colors[1])
                 self.bottom(colors[0])
         elif len(colors) == 3:
-            raise Exception("3 bins isnt supported yet")
+            raise Exception("Three bins are not supported yet")
 
     def show_loading(self, percent: int) -> None:
         number_lit = (percent * self.num_pixels) / 100

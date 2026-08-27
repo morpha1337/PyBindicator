@@ -20,7 +20,7 @@ def demo():
         start = random.randint(1, 3)
 
         if start == 1:
-            print("showing 1 random colors.")
+            print("showing 1 random color.")
             color = gbit.get_random_color()
             gbit.top(color)
             gbit.bottom(color)

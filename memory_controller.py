@@ -93,7 +93,7 @@ class MemoryController:
         with open("memory.txt", "r") as file:
             encoded_string = file.read()
         nvm_helper.save_data(encoded_string, test_run=False, verbose=False)
-        print("Initialised Memory State into NVM.")
+        print("Initialized Memory State into NVM.")
         self.load_from_mem()
 
     def clear_notifications(self) -> None:
@@ -112,4 +112,4 @@ class MemoryController:
         """Advance each bin to its next future collection date."""
         for bin_inst in self.notifications:
             bin_inst.set_next_collection_date()
-        print("All Notifications Next Collection Date has been recalculated.")
+        print("All notification next collection dates have been recalculated.")

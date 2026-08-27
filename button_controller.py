@@ -28,7 +28,7 @@ class ButtonController:
             self.button.deinit()
             self.led.deinit()
         except AttributeError:
-            print("Button Pins were not initialised. Continuing...")
+            print("Button pins were not initialized. Continuing...")
 
     def build_pin_alarm(self):
         """Release pins and return a PinAlarm for wake-on-button."""
@@ -74,7 +74,7 @@ class ButtonController:
             # Pull-up wiring: True = released, False = pressed.
             if self.button.value is True:
                 self.led.value = False
-                print("Pressed")
+                print("Released")
             else:
-                print("Unpressed")
+                print("Pressed")
                 self.led.value = True
