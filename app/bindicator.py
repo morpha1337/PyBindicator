@@ -5,7 +5,7 @@ from __future__ import annotations
 from secrets import secrets
 from config import config
 from model.bin import Bin, convert_json_to_bin
-from helpers import was_woken_normally
+from helpers import get_wake_source, WakeSource
 from controllers.button import ButtonController
 from controllers.glow_bit import GlowBitController, WHITE, RED
 from controllers.wifi import WifiController
@@ -33,11 +33,13 @@ def start_program(catch_errors: bool) -> None:
         current_time = wifi.set_date_time(config["timezone_offset"])
         print("Last Boot Time Was: ", memory.last_wake_time)
 
-        woken_up = was_woken_normally(memory.last_wake_time, current_time)
-        if woken_up:
+        wake_source = get_wake_source()
+        print("Wake source: ", wake_source)
+        if wake_source == WakeSource.TIME:
+            # Time alarm — update notification state based on current time.
             memory.update_notifications()
-        else:
-            # Button press or power glitch — discard stale notification state.
+        elif wake_source == WakeSource.BUTTON:
+            # Button press — discard stale notification state.
             memory.clear_notifications()
 
         if not memory.notifications:
@@ -50,6 +52,7 @@ def start_program(catch_errors: bool) -> None:
         active_notifs = get_active_notifications(
             memory.notifications, t_cont.alert_begin, t_cont.alert_end
         )
+
         if active_notifs:
             gbit.show_notifications(active_notifs)
         else:

@@ -364,7 +364,6 @@ From code review and project notes — fix when touching related areas:
 | `helpers.was_woken_normally`           | Compares reset reason strings incorrectly; button wake detection unreliable               |
 | `controllers.button.read_button_state` | Debounce not implemented (see Adafruit `debouncer` library)                               |
 | Hardware                               | GlowBit heat on 5 V over long periods — consider resistor on 5 V line or lower brightness |
-| 3-bin display                          | `show_notifications` raises for three simultaneous bins                                   |
 
 
 Low-priority / nice-to-have from notes: CPU temperature probe, email error reports, async startup animation, solid-print lid STL (+2.5 mm body height).

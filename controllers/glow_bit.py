@@ -66,22 +66,21 @@ class GlowBitController:
         return random.choice([RED, GREEN, YELLOW, MAGENTA, CYAN])
 
     def show_notifications(self, bins: list[Bin]) -> None:
-        """Light top/bottom segments for one or two active bins."""
+        """Light top/bottom segments for one or two active bins (strip has two halves)."""
         if not bins:
             return
+        # Hardware is two segments only; ignore any further active bins.
+        bins = bins[:2]
         if len(bins) == 1:
             self.top(bins[0].color)
             self.bottom(bins[0].color)
             return
-        if len(bins) == 2:
-            if random.randint(0, 1) == 0:
-                self.top(bins[0].color)
-                self.bottom(bins[1].color)
-            else:
-                self.top(bins[1].color)
-                self.bottom(bins[0].color)
-            return
-        raise Exception("Three bins are not supported yet")
+        if random.randint(0, 1) == 0:
+            self.top(bins[0].color)
+            self.bottom(bins[1].color)
+        else:
+            self.top(bins[1].color)
+            self.bottom(bins[0].color)
 
     def show_loading(self, percent: int) -> None:
         """Light a progress bar; color shifts red → yellow → green by percent."""

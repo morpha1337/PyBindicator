@@ -3,12 +3,20 @@
 from __future__ import annotations
 
 from time import struct_time, localtime, mktime
-import microcontroller
+import alarm
 
 try:
     from typing import Optional
 except ImportError:
     pass
+
+
+class WakeSource:
+    """How the board woke into this interpreter restart (deep sleep or power-on)."""
+
+    TIME = "time"
+    BUTTON = "button"
+    POWER = "power"
 
 
 def string_to_struct_time(value: Optional[str]) -> Optional[struct_time]:
@@ -50,19 +58,14 @@ def convert_end_time_to_seconds(value: str) -> int:
     return int(raw_time[0]) * 60 * 60 + int(raw_time[1]) * 60
 
 
-def was_woken_normally(
-    next_wake_up_time: Optional[struct_time],
-    current_time: struct_time,
-) -> bool:
-    """True if wake was from the scheduled deep-sleep alarm, not button or power glitch."""
-    valid_reasons = [
-        "microcontroller.ResetReason.DEEP_SLEEP_ALARM",
-        "microcontroller.ResetReason.RESET_PIN",
-    ]
-
-    print("Reset Caused By: ", microcontroller.cpu.reset_reason)
-    reason = microcontroller.cpu.reset_reason
-    return reason in valid_reasons
+def get_wake_source() -> str:
+    """Return WakeSource for this boot from alarm.wake_alarm (not reset_reason)."""
+    wake = alarm.wake_alarm
+    if isinstance(wake, alarm.time.TimeAlarm):
+        return WakeSource.TIME
+    if isinstance(wake, alarm.pin.PinAlarm):
+        return WakeSource.BUTTON
+    return WakeSource.POWER
 
 
 def get_today_as_epoch() -> int:
