@@ -5,7 +5,7 @@ from __future__ import annotations
 from secrets import secrets
 from config import config
 from model.bin import Bin, convert_json_to_bin
-from helpers import get_wake_source, WakeSource
+from helpers import get_wake_source, needs_clock_sync, WakeSource
 from controllers.button import ButtonController
 from controllers.glow_bit import GlowBitController, WHITE, RED
 from controllers.wifi import WifiController
@@ -19,7 +19,7 @@ from microcontroller import reset
 
 def start_program(catch_errors: bool) -> None:
     """Run one production cycle, then deep-sleep until the next alarm or button press."""
-    button = ButtonController(config["button"])
+    button = ButtonController()
     gbit = GlowBitController(config["glowbit"])
     wifi = WifiController(secrets, config["wifi"])
     t_cont = TimeController(config["time"])
@@ -29,12 +29,23 @@ def start_program(catch_errors: bool) -> None:
     gbit.bottom(WHITE)
 
     try:
-        wifi.connect()
-        current_time = wifi.set_date_time(config["timezone_offset"])
-        print("Last Boot Time Was: ", memory.last_wake_time)
-
         wake_source = get_wake_source()
         print("Wake source: ", wake_source)
+        print("Last Boot Time Was: ", memory.last_wake_time)
+        print("Last Clock Sync Was: ", memory.last_clock_sync)
+
+        if needs_clock_sync(
+            wake_source,
+            memory.last_clock_sync,
+            config["time"]["clock_sync_interval_days"],
+        ):
+            wifi.connect()
+            current_time = wifi.set_date_time(config["timezone_offset"])
+            memory.last_clock_sync = current_time
+        else:
+            current_time = time.localtime()
+            print("Skipping Wi-Fi; using RTC time: ", current_time)
+
         if wake_source == WakeSource.TIME:
             # Time alarm — update notification state based on current time.
             memory.update_notifications()

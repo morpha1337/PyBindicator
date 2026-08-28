@@ -209,11 +209,15 @@ flowchart TD
     Entry[code.py — start_bindicator PRODUCTION]
     Init[Init controllers + load NVM state]
     Startup[GlowBit: white top and bottom]
+    WakeReason[Classify wake: TIME / BUTTON / POWER]
+    NeedSync{needs_clock_sync?\nPOWER, never synced,\nor last_clock_sync older than interval}
     WiFi[Connect Wi-Fi]
-    NTP[Sync time via NTP]
-    WakeReason{Scheduled wake?}
-    UpdateBins[Advance bin collection dates in NVM]
-    ClearBins[Clear notifications from NVM]
+    NTP[Sync RTC via NTP; store last_clock_sync]
+    UseRTC[Skip Wi-Fi; use RTC time.localtime]
+    WakeBranch{Wake source?}
+    UpdateBins[TIME — advance bin collection dates in NVM]
+    ClearBins[BUTTON — clear notifications from NVM]
+    PowerNop[POWER — keep NVM notifications]
     Empty{Any bins in memory?}
     Seed[Seed bins from secrets.py schedule]
     Filter[Filter bins in alert window]
@@ -227,9 +231,12 @@ flowchart TD
     Error[Exception: GlowBit solid red]
     Rethrow[Re-raise — production catch_errors=False]
 
-    Wake --> Boot --> Entry --> Init --> Startup --> WiFi --> NTP --> WakeReason
-    WakeReason -->|yes — was_woken_normally| UpdateBins --> Empty
-    WakeReason -->|no — button or power glitch| ClearBins --> Empty
+    Wake --> Boot --> Entry --> Init --> Startup --> WakeReason --> NeedSync
+    NeedSync -->|yes| WiFi --> NTP --> WakeBranch
+    NeedSync -->|no — recent sync| UseRTC --> WakeBranch
+    WakeBranch -->|TIME| UpdateBins --> Empty
+    WakeBranch -->|BUTTON| ClearBins --> Empty
+    WakeBranch -->|POWER| PowerNop --> Empty
     Empty -->|no bins stored| Seed --> Filter
     Empty -->|bins present| Filter
     Filter --> Active
@@ -247,9 +254,10 @@ flowchart TD
     style Sleep fill:#e8f4fc
     style ShowLights fill:#fff3cd
     style Error fill:#f8d7da
+    style NeedSync fill:#e2e3e5
 ```
 
-
+**Clock sync** (`helpers.needs_clock_sync`): Wi-Fi + NTP run on cold boot (`WakeSource.POWER`), when `last_clock_sync` is missing, or when that stamp is older than `time.clock_sync_interval_days` (default 30). Otherwise TIME/BUTTON wakes reuse the RTC.
 
 **Alert window** (default in `config.py`): from **12:00 the day before** collection through **12:00 on collection day**. A bin is “active” when the current time falls in that window relative to its next collection date.
 
@@ -260,14 +268,16 @@ flowchart TD
 ### Steps (reference)
 
 1. Boot controllers; show white on GlowBit top/bottom during startup.
-2. Connect Wi-Fi (`WifiController`), sync time via NTP (`config['timezone_offset']`, default GMT+10).
-3. Determine wake reason (`helpers.was_woken_normally` + `microcontroller.cpu.reset_reason`).
-  - Normal scheduled wake → refresh bin dates in memory.
-  - Button / power glitch → clear stale notifications.
-4. If no bins in NVM → seed from `secrets['bins']` via `model.bin.convert_json_to_bin`.
-5. Filter active bins by alert window (`TimeController.alert_begin` / `alert_end` vs collection date).
-6. Display on GlowBit (`GlowBitController.show_notifications`) or turn off.
-7. Compute next wake time, persist state to NVM, deep sleep until alarm or button.
+2. Classify wake via `helpers.get_wake_source` (`alarm.wake_alarm` → TIME / BUTTON / POWER).
+3. If `needs_clock_sync` → connect Wi-Fi and NTP (`config['timezone_offset']`), write `last_clock_sync` in NVM; else use RTC (`time.localtime()`).
+4. Branch on wake source:
+   - TIME → refresh bin dates in memory.
+   - BUTTON → clear stale notifications.
+   - POWER → leave notifications as loaded.
+5. If no bins in NVM → seed from `secrets['bins']` via `model.bin.convert_json_to_bin`.
+6. Filter active bins by alert window (`TimeController.alert_begin` / `alert_end` vs collection date).
+7. Display on GlowBit (`GlowBitController.show_notifications`) or turn off.
+8. Compute next wake time, persist state to NVM (including `last_clock_sync`), deep sleep until alarm or button.
 
 Alert window defaults (in `config.py`): lights from **12:00** the day before collection through **12:00** on collection day (24 h clock).
 
@@ -301,9 +311,9 @@ Other councils use different colors — adjust `councils.monash.get_bin_color` o
 
 - `timezone_offset` — hours from UTC for NTP
 - `glowbit.brightness` — 0.0–1.0 NeoPixel brightness
-- `button.debounce` — ms (debounce not fully implemented yet)
 - `time.alert_begin` / `alert_end` — alert window strings (`"HH:MM"`)
 - `time.use_external_wake_up` — include button `PinAlarm` in sleep
+- `time.clock_sync_interval_days` — force Wi-Fi/NTP if `last_clock_sync` is older than this (default 30)
 - `wifi.retries` / `timeout` — connection attempts and station timeout (ms)
 
 ### `secrets.py` (do not commit real values)
@@ -333,7 +343,7 @@ secrets = {
 
 Production currently seeds bins from `secrets['bins']` (static schedule). Live council fetch is implemented in `monash.get_bin_data` for debug/experimentation.
 
-NVM JSON uses snake_case keys (`last_wake_time`, `current_notifications`, etc.) as defined in `memory.txt`.
+NVM JSON uses snake_case keys (`last_wake_time`, `last_clock_sync`, `current_notifications`, etc.) as defined in `memory.txt`.
 
 ### Deploy scripts
 
@@ -358,12 +368,10 @@ Update CircuitPython and libraries periodically — bundled versions are in `dep
 From code review and project notes — fix when touching related areas:
 
 
-| Area                                   | Issue                                                                                     |
-| -------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `app.bindicator.get_next_wake_time`    | Loop always advances index to `len(notifications)` → likely index error                   |
-| `helpers.was_woken_normally`           | Compares reset reason strings incorrectly; button wake detection unreliable               |
-| `controllers.button.read_button_state` | Debounce not implemented (see Adafruit `debouncer` library)                               |
-| Hardware                               | GlowBit heat on 5 V over long periods — consider resistor on 5 V line or lower brightness |
+| Area                                | Issue                                                                                     |
+| ----------------------------------- | ----------------------------------------------------------------------------------------- |
+| `app.bindicator.get_next_wake_time` | Loop always advances index to `len(notifications)` → likely index error                   |
+| Hardware                            | GlowBit heat on 5 V over long periods — consider resistor on 5 V line or lower brightness |
 
 
 Low-priority / nice-to-have from notes: CPU temperature probe, email error reports, async startup animation, solid-print lid STL (+2.5 mm body height).

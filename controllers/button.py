@@ -19,12 +19,10 @@ class ButtonController:
     button_led_pin = board.A2
     button_pin = board.A3
 
-    debounce: int
     led: digitalio.DigitalInOut
     button: Optional[digitalio.DigitalInOut]
 
-    def __init__(self, config: dict) -> None:
-        self.debounce = config["debounce"]
+    def __init__(self) -> None:
         self.led = digitalio.DigitalInOut(self.button_led_pin)
         self.led.direction = digitalio.Direction.OUTPUT
         self.led.value = False
@@ -61,7 +59,6 @@ class ButtonController:
             self.button = None
 
     def read_button_state(self) -> bool:
-        # todo: add debounce (see adafruit_debouncer)
         return self.button.value
 
     def await_reset(self) -> None:

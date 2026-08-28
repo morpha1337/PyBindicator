@@ -68,6 +68,20 @@ def get_wake_source() -> str:
     return WakeSource.POWER
 
 
+def needs_clock_sync(
+    wake_source: str,
+    last_clock_sync: Optional[struct_time],
+    interval_days: int,
+) -> bool:
+    """True if Wi-Fi/NTP is required: cold boot, never synced, or interval elapsed."""
+    if wake_source == WakeSource.POWER:
+        return True
+    if last_clock_sync is None:
+        return True
+    age_seconds = mktime(localtime()) - mktime(last_clock_sync)
+    return age_seconds >= get_days_to_seconds(interval_days)
+
+
 def get_today_as_epoch() -> int:
     """Midnight today as seconds since epoch."""
     today_as_struct = localtime()

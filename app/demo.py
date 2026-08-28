@@ -12,7 +12,7 @@ from controllers.time import TimeController
 
 def demo() -> None:
     """Light random top/bottom colours, then light-sleep until button press."""
-    button = ButtonController(config["button"])
+    button = ButtonController()
     gbit = GlowBitController(config["glowbit"])
     t_cont = TimeController(config["time"])
 

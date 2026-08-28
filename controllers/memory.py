@@ -21,6 +21,7 @@ class MemoryController:
     _state: Optional[dict]
     last_wake_time: Optional[struct_time]
     next_wake_time: Optional[struct_time]
+    last_clock_sync: Optional[struct_time]
     notification_expiry_time: Optional[struct_time]
     notifications: list[Bin]
 
@@ -28,6 +29,7 @@ class MemoryController:
         self._state = None
         self.last_wake_time = None
         self.next_wake_time = None
+        self.last_clock_sync = None
         self.notification_expiry_time = None
         self.notifications = []
         self.load_from_mem()
@@ -41,6 +43,7 @@ class MemoryController:
         json_obj = {
             "last_wake_time": struct_time_to_string(self.last_wake_time),
             "next_wake_time": struct_time_to_string(self.next_wake_time),
+            "last_clock_sync": struct_time_to_string(self.last_clock_sync),
             "notification_expiry_time": struct_time_to_string(self.notification_expiry_time),
             "current_notifications": notifs,
         }
@@ -58,6 +61,8 @@ class MemoryController:
             self._state = json.loads(encoded_string)
             self.last_wake_time = string_to_struct_time(self._state["last_wake_time"])
             self.next_wake_time = string_to_struct_time(self._state["next_wake_time"])
+            # Missing key = pre-migration NVM; treat as never synced.
+            self.last_clock_sync = string_to_struct_time(self._state.get("last_clock_sync"))
             self.notification_expiry_time = string_to_struct_time(
                 self._state["notification_expiry_time"]
             )

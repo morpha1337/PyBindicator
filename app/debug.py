@@ -20,7 +20,7 @@ def debug() -> None:
     print("=== Bindicator debug checklist ===")
 
     print("[1/8] Init controllers...")
-    button = ButtonController(config["button"])
+    button = ButtonController()
     gbit = GlowBitController(config["glowbit"])
     wifi = WifiController(secrets, config["wifi"])
     t_cont = TimeController(config["time"])
