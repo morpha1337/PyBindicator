@@ -25,25 +25,33 @@ def debug() -> None:
     wifi = WifiController(secrets, config["wifi"])
     t_cont = TimeController(config["time"])
     memory = MemoryController()
+    gbit.show_loading(12)
 
     print("[2/8] GlowBit startup (white)...")
-    gbit.top(WHITE)
-    gbit.bottom(WHITE)
+    gbit.show_loading(25)
+    # gbit.top(WHITE)
+    # gbit.bottom(WHITE)
 
     print("[3/8] Wi-Fi connect...")
+    gbit.show_loading(37)
     wifi.connect()
+    wifi.print_network_info()
 
     print("[4/8] NTP sync...")
+    gbit.show_loading(50)
     current_time = wifi.set_date_time(config["timezone_offset"])
 
     print("[5/8] Wi-Fi HTTP test...")
+    gbit.show_loading(62)
     wifi.test_wifi()
 
     print("[6/8] NVM last wake time...")
+    gbit.show_loading(75)
     print("Last Boot Time Was: ", memory.last_wake_time)
     memory.last_wake_time = current_time
 
     print("[7/8] Monash schedule + active bins on GlowBit...")
+    gbit.show_loading(87)
     bins = monash.get_bin_data(secrets["bin_data"], wifi)
     active_bins = list(
         filter(lambda x: x.is_active(t_cont.alert_begin, t_cont.alert_end), bins)
@@ -58,6 +66,7 @@ def debug() -> None:
     memory.save_to_mem()
 
     print("[8/8] Button press test...")
+    gbit.show_loading(100)
     button.test_button(10)
 
     print("=== Checklist complete — light sleep 5s (button wake enabled) ===")

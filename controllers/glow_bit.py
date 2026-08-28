@@ -84,6 +84,7 @@ class GlowBitController:
         raise Exception("Three bins are not supported yet")
 
     def show_loading(self, percent: int) -> None:
+        """Light a progress bar; color shifts red → yellow → green by percent."""
         number_lit = (percent * self.num_pixels) / 100
 
         # CircuitPython has no round(); manual ceil/floor instead.
@@ -92,7 +93,21 @@ class GlowBitController:
         else:
             number_lit = floor(number_lit)
 
-        index = 0
-        while index < number_lit:
-            self.apply(index, YELLOW)
-            index += 1
+        # Calculate color based on percent; red → yellow → green gradient.
+        if percent <= 0:
+            color = RED
+        elif percent >= 100:
+            color = GREEN
+        elif percent <= 50:
+            blend = percent / 50
+            color = (255, int(170 * blend), 0)
+        else:
+            blend = (percent - 50) / 50
+            color = (int(255 * (1 - blend)), int(170 + 85 * blend), 0)
+
+        for index in range(self.num_pixels):
+            if index < number_lit:
+                self.pixels[index] = color
+            else:
+                self.pixels[index] = OFF
+        self.pixels.show()
