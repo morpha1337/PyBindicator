@@ -36,4 +36,3 @@ Write-Host "Used      : $usedKB KB"
 Write-Host "Free      : $freeKB KB"
 Write-Host "Usage     : $usedPercent% used / $freePercent% remaining"
 Write-Host ""
-```

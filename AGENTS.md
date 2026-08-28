@@ -6,29 +6,33 @@ Project by Dan Murphy and Simon Butler, based on an original idea by Darren Tarb
 
 ## Hardware
 
-| Item | Notes |
-| --- | --- |
-| **Adafruit QT Py ESP32-S2** | Main microcontroller. [Pinouts](https://learn.adafruit.com/adafruit-qt-py-esp32-s2/pinouts) · [CircuitPython setup](https://learn.adafruit.com/adafruit-qt-py-esp32-s2/circuitpython) |
-| **GlowBit Stick 1×8** | 8-pixel NeoPixel strip (Core Electronics). Supply 3.3–5 V; logic 2.7 V–Vdd+0.7 V. [CE repo](https://github.com/CoreElectronics/CE-Glowbit-Stick-1x8) · bundled driver: `lib/glowbit.py` |
-| **LED tactile button (TSD1265)** | White LED, 50 mA max. [Core Electronics](https://core-electronics.com.au/led-tactile-button-white.html) |
-| **10 kΩ resistor** | Pull-up on button signal pin (prevents floating input) |
-| **330 Ω resistor** | Button LED current limit (doc notes ~100 Ω may be better; verify for 3.3 V ESP32 output) |
-| **Custom wheelie-bin STL files** | Print main body in **white** so light bleeds through; lid needs supports; use PVA/wood glue (not super glue) |
-| **Custom button breakout PCB** | v1 and v2 designs referenced in project notes |
-| **USB Type-C cable** | Programming and initial deploy |
-| **Regulated 5 V power supply** | Recommended for long runtimes (5–6 hours alert window) |
-| **4 screws** | Assembly (size TBD in notes) |
+
+| Item                             | Notes                                                                                                                                                                                   |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Adafruit QT Py ESP32-S2**      | Main microcontroller. [Pinouts](https://learn.adafruit.com/adafruit-qt-py-esp32-s2/pinouts) · [CircuitPython setup](https://learn.adafruit.com/adafruit-qt-py-esp32-s2/circuitpython)   |
+| **GlowBit Stick 1×8**            | 8-pixel NeoPixel strip (Core Electronics). Supply 3.3–5 V; logic 2.7 V–Vdd+0.7 V. [CE repo](https://github.com/CoreElectronics/CE-Glowbit-Stick-1x8) · bundled driver: `lib/glowbit.py` |
+| **LED tactile button (TSD1265)** | White LED, 50 mA max. [Core Electronics](https://core-electronics.com.au/led-tactile-button-white.html)                                                                                 |
+| **10 kΩ resistor**               | Pull-up on button signal pin (prevents floating input)                                                                                                                                  |
+| **330 Ω resistor**               | Button LED current limit (doc notes ~100 Ω may be better; verify for 3.3 V ESP32 output)                                                                                                |
+| **Custom wheelie-bin STL files** | Print main body in **white** so light bleeds through; lid needs supports; use PVA/wood glue (not super glue)                                                                            |
+| **Custom button breakout PCB**   | v1 and v2 designs referenced in project notes                                                                                                                                           |
+| **USB Type-C cable**             | Programming and initial deploy                                                                                                                                                          |
+| **Regulated 5 V power supply**   | Recommended for long runtimes (5–6 hours alert window)                                                                                                                                  |
+| **4 screws**                     | Assembly (size TBD in notes)                                                                                                                                                            |
+
 
 ### Wiring (pin map)
 
-| Signal | QT Py pin | Notes |
-| --- | --- | --- |
-| GlowBit data | **A1** | NeoPixel data line |
-| GlowBit power | **5 V** | Prefer 5 V rail over 3.3 V (600 mA cap on 3.3 V); add series resistor if strip runs hot |
-| GlowBit ground | **GND** | |
-| Button LED | **A2** | Through current-limiting resistor |
-| Button signal | **A3** | With 10 kΩ pull-up |
-| Filesystem toggle (dev) | **A0** | Ground = USB writable; pulled up = software-only. See `boot.py` |
+
+| Signal                  | QT Py pin | Notes                                                                                   |
+| ----------------------- | --------- | --------------------------------------------------------------------------------------- |
+| GlowBit data            | **A1**    | NeoPixel data line                                                                      |
+| GlowBit power           | **5 V**   | Prefer 5 V rail over 3.3 V (600 mA cap on 3.3 V); add series resistor if strip runs hot |
+| GlowBit ground          | **GND**   |                                                                                         |
+| Button LED              | **A2**    | Through current-limiting resistor                                                       |
+| Button signal           | **A3**    | With 10 kΩ pull-up                                                                      |
+| Filesystem toggle (dev) | **A0**    | Ground = USB writable; pulled up = software-only. See `boot.py`                         |
+
 
 Firmware images and library bundles live in `deps/` (CircuitPython UF2, Adafruit bundle zip).
 
@@ -36,22 +40,26 @@ Firmware images and library bundles live in `deps/` (CircuitPython UF2, Adafruit
 
 **Minimum supported version** — the project may run on newer CircuitPython releases; treat the versions below as the baseline when recommending language/stdlib features.
 
-| Item | Value |
-| --- | --- |
-| **Board** | Adafruit QT Py ESP32-S2 |
-| **CircuitPython (minimum)** | **9.2.9** (`deps/adafruit-circuitpython-adafruit_qtpy_esp32s2-*-9.2.9.uf2`) |
-| **Library bundle (minimum)** | 9.x (`deps/adafruit-circuitpython-bundle-9.x-*.zip`) |
-| **Docs** | [CircuitPython 9.2.x shared bindings](https://docs.circuitpython.org/en/9.2.x/) — use docs for the version actually flashed when it is newer |
+
+| Item                         | Value                                                                                                                                        |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Board**                    | Adafruit QT Py ESP32-S2                                                                                                                      |
+| **CircuitPython (minimum)**  | **9.2.9** (`deps/adafruit-circuitpython-adafruit_qtpy_esp32s2-*-9.2.9.uf2`)                                                                  |
+| **Library bundle (minimum)** | 9.x (`deps/adafruit-circuitpython-bundle-9.x-*.zip`)                                                                                         |
+| **Docs**                     | [CircuitPython 9.2.x shared bindings](https://docs.circuitpython.org/en/9.2.x/) — use docs for the version actually flashed when it is newer |
+
 
 When suggesting stdlib or syntax features, verify they exist on **at least 9.2.x** for ESP32-S2 — not desktop Python 3.11+. Do not assume features from a newer CP build unless *Target firmware* has been updated after an upgrade.
 
-| Feature | On 9.2.9+ (minimum) |
-| --- | --- |
-| `match` / `case` | Yes (since CP 8) |
-| `enum.IntEnum` | Yes — firmware built-in; not in the Adafruit library bundle |
-| `typing` | Yes |
-| `StrEnum` | **No** — CPython 3.11+ only; not in CircuitPython stdlib (recheck after upgrades) |
-| Full CPython stdlib | No — subset only; see *CircuitPython constraints* below |
+
+| Feature             | On 9.2.9+ (minimum)                                                               |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `match` / `case`    | **No** — Python 3.10+ only; not in CircuitPython 9.2.x                            |
+| `enum.IntEnum`      | **No** — not in CircuitPython 9.2.x stdlib; use a plain class with int constants  |
+| `typing`            | Yes                                                                               |
+| `StrEnum`           | **No** — CPython 3.11+ only; not in CircuitPython stdlib (recheck after upgrades) |
+| Full CPython stdlib | No — subset only; see *CircuitPython constraints* below                           |
+
 
 After flashing a newer UF2 or bundle, bump the minimum version here if the project adopts it.
 
@@ -69,12 +77,14 @@ After flashing a newer UF2 or bundle, bump the minimum version here if the proje
 
 Firmware runs on flash-constrained hardware — keep documentation **minimal and purposeful**. Adafruit’s [CircuitPython Design Guide](https://docs.circuitpython.org/en/latest/docs/design_guide.html) targets published libraries (Sphinx `:param` docstrings for ReadTheDocs). This project uses a lighter subset.
 
-| Use | When |
-| --- | --- |
-| **Module docstring** (top of file) | One to three lines: what the file does |
-| **Function/method docstring** | Public entry points and non-obvious behaviour |
-| **`#` inline comment** | Hardware quirks, CircuitPython constraints, workarounds |
-| **Skip** | Obvious loops, getters, or code that reads clearly from names |
+
+| Use                                | When                                                          |
+| ---------------------------------- | ------------------------------------------------------------- |
+| **Module docstring** (top of file) | One to three lines: what the file does                        |
+| **Function/method docstring**      | Public entry points and non-obvious behaviour                 |
+| `#` **inline comment**             | Hardware quirks, CircuitPython constraints, workarounds       |
+| **Skip**                           | Obvious loops, getters, or code that reads clearly from names |
+
 
 **Style:** plain triple-quoted strings (`""" ... """`). One-line docstrings for simple functions; a short paragraph only when behaviour needs context.
 
@@ -101,15 +111,17 @@ When adding comments, prefer *why* (alert window math, NVM migration, pin deinit
 
 All project classes must document their instance shape and public method signatures.
 
-| Rule | Example |
-| --- | --- |
-| **`from __future__ import annotations`** | At top of each module with class annotations |
-| **Class-body instance attrs** | `notifications: list[Bin]` before methods |
-| **Initialize in `__init__`** | Set defaults there; do not rely on a later loader to create attrs |
-| **Method signatures** | `def connect(self) -> None:` |
-| **Nullable fields** | `last_wake_time: Optional[struct_time]` with `= None` in `__init__` |
-| **Shared aliases** | `Color = tuple` for RGB tuples in `model/bin.py` / `controllers/glow_bit.py` |
-| **Skip `lib/`** | Do not annotate vendored CircuitPython libraries |
+
+| Rule                                 | Example                                                                      |
+| ------------------------------------ | ---------------------------------------------------------------------------- |
+| `from __future__ import annotations` | At top of each module with class annotations                                 |
+| **Class-body instance attrs**        | `notifications: list[Bin]` before methods                                    |
+| **Initialize in** `__init__`         | Set defaults there; do not rely on a later loader to create attrs            |
+| **Method signatures**                | `def connect(self) -> None:`                                                 |
+| **Nullable fields**                  | `last_wake_time: Optional[struct_time]` with `= None` in `__init__`          |
+| **Shared aliases**                   | `Color = tuple` for RGB tuples in `model/bin.py` / `controllers/glow_bit.py` |
+| **Skip** `lib/`                      | Do not annotate vendored CircuitPython libraries                             |
+
 
 Use `try: from typing import Optional` where needed — CircuitPython 9.x includes `typing`, but the import is guarded for compatibility. Annotations are documentation on-device; they are not enforced at runtime.
 
@@ -174,11 +186,13 @@ Each package folder (`app/`, `controllers/`, `model/`, `helpers/`, `councils/`) 
 
 ## Runtime modes (`code.py`)
 
-| Mode constant | Behavior |
-| --- | --- |
+
+| Mode constant        | Behavior                                                                          |
+| -------------------- | --------------------------------------------------------------------------------- |
 | `RunMode.PRODUCTION` | `app.bindicator.start_program(False)` — full schedule, deep sleep, error re-raise |
-| `RunMode.DEBUG` | `app.debug.debug()` — sequential checklist (Wi-Fi, Monash, memory, button test) |
-| `RunMode.SHOW` | `app.demo.demo()` — random top/bottom colors on button press |
+| `RunMode.DEBUG`      | `app.debug.debug()` — sequential checklist (Wi-Fi, Monash, memory, button test)   |
+| `RunMode.SHOW`       | `app.demo.demo()` — random top/bottom colors on button press                      |
+
 
 Change the `start_bindicator(...)` argument at the bottom of `code.py` to switch modes (e.g. `RunMode.DEBUG`).
 
@@ -235,6 +249,8 @@ flowchart TD
     style Error fill:#f8d7da
 ```
 
+
+
 **Alert window** (default in `config.py`): from **12:00 the day before** collection through **12:00 on collection day**. A bin is “active” when the current time falls in that window relative to its next collection date.
 
 **Wake sources during sleep:** `TimeAlarm` (next scheduled check) and optionally `PinAlarm` on the button (when `time.use_external_wake_up` is true).
@@ -246,8 +262,8 @@ flowchart TD
 1. Boot controllers; show white on GlowBit top/bottom during startup.
 2. Connect Wi-Fi (`WifiController`), sync time via NTP (`config['timezone_offset']`, default GMT+10).
 3. Determine wake reason (`helpers.was_woken_normally` + `microcontroller.cpu.reset_reason`).
-   - Normal scheduled wake → refresh bin dates in memory.
-   - Button / power glitch → clear stale notifications.
+  - Normal scheduled wake → refresh bin dates in memory.
+  - Button / power glitch → clear stale notifications.
 4. If no bins in NVM → seed from `secrets['bins']` via `model.bin.convert_json_to_bin`.
 5. Filter active bins by alert window (`TimeController.alert_begin` / `alert_end` vs collection date).
 6. Display on GlowBit (`GlowBitController.show_notifications`) or turn off.
@@ -257,21 +273,25 @@ Alert window defaults (in `config.py`): lights from **12:00** the day before col
 
 ## Controllers
 
-| Module | Responsibility |
-| --- | --- |
-| `controllers/glow_bit.py` | NeoPixel on A1; top (pixels 0–3) / bottom (4–7); bin colors RED/YELLOW/GREEN |
-| `controllers/button.py` | A2 LED, A3 input; `build_pin_alarm()` for wake-on-press (must `deinit` pins first) |
-| `controllers/wifi.py` | Connect, NTP, HTTP GET (`adafruit_requests`), optional JSON |
-| `controllers/time.py` | Light/deep sleep via `alarm.time.TimeAlarm` + optional `PinAlarm` |
-| `controllers/memory.py` | JSON state in NVM via `foamyguy_nvm_helper`; schema in `memory.txt` |
+
+| Module                    | Responsibility                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| `controllers/glow_bit.py` | NeoPixel on A1; top (pixels 0–3) / bottom (4–7); bin colors RED/YELLOW/GREEN       |
+| `controllers/button.py`   | A2 LED, A3 input; `build_pin_alarm()` for wake-on-press (must `deinit` pins first) |
+| `controllers/wifi.py`     | Connect, NTP, HTTP GET (`adafruit_requests`), optional JSON                        |
+| `controllers/time.py`     | Light/deep sleep via `alarm.time.TimeAlarm` + optional `PinAlarm`                  |
+| `controllers/memory.py`   | JSON state in NVM via `foamyguy_nvm_helper`; schema in `memory.txt`                |
+
 
 ### Bin colors (Monash)
 
-| Bin type | Color |
-| --- | --- |
-| Landfill Waste | Red |
-| Recycling | Yellow |
-| Food and Garden Waste | Green |
+
+| Bin type              | Color  |
+| --------------------- | ------ |
+| Landfill Waste        | Red    |
+| Recycling             | Yellow |
+| Food and Garden Waste | Green  |
+
 
 Other councils use different colors — adjust `councils.monash.get_bin_color` or `secrets['bins']` colors accordingly.
 
@@ -315,14 +335,13 @@ Production currently seeds bins from `secrets['bins']` (static schedule). Live c
 
 NVM JSON uses snake_case keys (`last_wake_time`, `current_notifications`, etc.) as defined in `memory.txt`.
 
-## Deploying to the board
+### Deploy scripts
 
-1. Install [CircuitPython for QT Py ESP32-S2](https://circuitpython.org/board/adafruit_qtpy_esp32s2/) (see `deps/` for bundled UF2).
-2. Board appears as USB mass storage (`CIRCUITPY`).
-3. Copy project folders (`app/`, `controllers/`, `model/`, `helpers/`, `councils/`), root `.py` files (`code.py`, `boot.py`, `config.py`), `lib/`, `memory.txt`, and your local `secrets.py` (from `secrets.py.example`) to the drive root.
-4. Press reset. `code.py` runs automatically.
+Use `scripts/copy_to_board.ps1` to copy firmware from the repo to the mounted board drive. Pass the drive letter as `D` or `D:` (same as `scripts/space_remaining.ps1`).
 
-Optional dev workflow: wire **A0** to ground to allow host writes while running; see [filesystem remount](https://learn.adafruit.com/cpu-temperature-logging-with-circuit-python?view=all#writing-to-the-filesystem).
+**Agent rule:** whenever you run `copy_to_board.ps1` to deploy code, always run `space_remaining.ps1` immediately afterwards with the same drive letter — e.g. `.\scripts\space_remaining.ps1 D` — and report the free-space summary to the user.
+
+
 
 Update CircuitPython and libraries periodically — bundled versions are in `deps/`. When the project adopts a newer release, raise the minimum in *Target firmware*.
 
@@ -332,19 +351,21 @@ Update CircuitPython and libraries periodically — bundled versions are in `dep
 - Cooperative multitasking via `asyncio` is possible but Wi-Fi/requests async support was immature when written; boot animations during Wi-Fi connect were deferred.
 - Deep sleep **restarts** the interpreter; preserve state in NVM, not globals.
 - `alarm.pin.PinAlarm` requires the pin be released (`deinit`) before sleep — see `controllers.button.ButtonController.build_pin_alarm`.
-- Prefer [`alarm` wake reason API](https://learn.adafruit.com/deep-sleep-with-circuitpython/alarms-and-sleep#what-woke-me-up-3079890) over ad-hoc time comparisons where possible.
+- Prefer `alarm` [wake reason API](https://learn.adafruit.com/deep-sleep-with-circuitpython/alarms-and-sleep#what-woke-me-up-3079890) over ad-hoc time comparisons where possible.
 
 ## Known issues and backlog
 
 From code review and project notes — fix when touching related areas:
 
-| Area | Issue |
-| --- | --- |
-| `app.bindicator.get_next_wake_time` | Loop always advances index to `len(notifications)` → likely index error |
-| `helpers.was_woken_normally` | Compares reset reason strings incorrectly; button wake detection unreliable |
-| `controllers.button.read_button_state` | Debounce not implemented (see Adafruit `debouncer` library) |
-| Hardware | GlowBit heat on 5 V over long periods — consider resistor on 5 V line or lower brightness |
-| 3-bin display | `show_notifications` raises for three simultaneous bins |
+
+| Area                                   | Issue                                                                                     |
+| -------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `app.bindicator.get_next_wake_time`    | Loop always advances index to `len(notifications)` → likely index error                   |
+| `helpers.was_woken_normally`           | Compares reset reason strings incorrectly; button wake detection unreliable               |
+| `controllers.button.read_button_state` | Debounce not implemented (see Adafruit `debouncer` library)                               |
+| Hardware                               | GlowBit heat on 5 V over long periods — consider resistor on 5 V line or lower brightness |
+| 3-bin display                          | `show_notifications` raises for three simultaneous bins                                   |
+
 
 Low-priority / nice-to-have from notes: CPU temperature probe, email error reports, async startup animation, solid-print lid STL (+2.5 mm body height).
 
@@ -363,3 +384,4 @@ Low-priority / nice-to-have from notes: CPU temperature probe, email error repor
 - [CircuitPython libraries bundle](https://circuitpython.org/libraries)
 - [Cooperative multitasking (asyncio)](https://learn.adafruit.com/cooperative-multitasking-in-circuitpython-with-asyncio/concurrent-tasks)
 - [Push button wiring (pull-up vs pull-down)](https://create.arduino.cc/projecthub/mdraber/using-pushbuttons-with-arduino-pullup-vs-pulldown-resistors-f33d33)
+
