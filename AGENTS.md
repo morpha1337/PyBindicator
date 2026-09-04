@@ -12,7 +12,7 @@ Project by Dan Murphy and Simon Butler, based on an original idea by Darren Tarb
 | **Adafruit QT Py ESP32-S2**      | Main microcontroller. [Pinouts](https://learn.adafruit.com/adafruit-qt-py-esp32-s2/pinouts) · [CircuitPython setup](https://learn.adafruit.com/adafruit-qt-py-esp32-s2/circuitpython)   |
 | **GlowBit Stick 1×8**            | 8-pixel NeoPixel strip (Core Electronics). Supply 3.3–5 V; logic 2.7 V–Vdd+0.7 V. [CE repo](https://github.com/CoreElectronics/CE-Glowbit-Stick-1x8) · bundled driver: `lib/glowbit.py` |
 | **LED tactile button (TSD1265)** | White LED, 50 mA max. [Core Electronics](https://core-electronics.com.au/led-tactile-button-white.html)                                                                                 |
-| **10 kΩ resistor**               | Pull-up on button signal pin (prevents floating input)                                                                                                                                  |
+| **10 kΩ resistor**               | Bias resistor on button signal (see *Button polarity* — do not assume active-low pull-up)                                                                                                |
 | **330 Ω resistor**               | Button LED current limit (doc notes ~100 Ω may be better; verify for 3.3 V ESP32 output)                                                                                                |
 | **Custom wheelie-bin STL files** | Print main body in **white** so light bleeds through; lid needs supports; use PVA/wood glue (not super glue)                                                                            |
 | **Custom button breakout PCB**   | v1 and v2 designs referenced in project notes                                                                                                                                           |
@@ -30,11 +30,40 @@ Project by Dan Murphy and Simon Butler, based on an original idea by Darren Tarb
 | GlowBit power           | **5 V**   | Prefer 5 V rail over 3.3 V (600 mA cap on 3.3 V); add series resistor if strip runs hot |
 | GlowBit ground          | **GND**   |                                                                                         |
 | Button LED              | **A2**    | Through current-limiting resistor                                                       |
-| Button signal           | **A3**    | With 10 kΩ pull-up                                                                      |
-| Filesystem toggle (dev) | **A0**    | Ground = USB writable; pulled up = software-only. See `boot.py`                         |
+| Button signal           | **A3**    | Active-high (pressed = `True`); see *Button polarity*                                   |
+| Filesystem toggle (dev) | **Boot**  | Onboard Boot button — hold during white NeoPixel window in `boot.py` for USB deploy     |
 
 
 Firmware images and library bundles live in `deps/` (CircuitPython UF2, Adafruit bundle zip).
+
+### Button polarity (tactile on A3)
+
+The LED tactile button on **A3** is **active-high** on this hardware (verified in DEBUG button test):
+
+| Physical state | `button.value` / `read_button_state()` |
+| -------------- | -------------------------------------- |
+| **Pressed**    | `True`                                 |
+| **Released**   | `False`                                |
+
+Use that polarity everywhere:
+
+- `await_reset` — wait until `button.value` is `True`
+- `PinAlarm` — `value=True` (wake when the pin goes high)
+- Debug labels — `True` → Pressed, `False` → Released
+
+Do **not** treat A3 as a classic active-low pull-up switch (`False` = pressed). That assumption was introduced in a later “fix” and inverted error-recovery / wake behaviour relative to the real breakout. The onboard **Boot** button used in `boot.py` is separate and *is* active-low with an internal pull-up.
+
+### Filesystem remount (`boot.py`)
+
+CIRCUITPY allows only one writer at a time (host PC **or** CircuitPython). `boot.py` chooses the mode on each hard boot / power-on:
+
+| Situation | Behaviour |
+| --------- | --------- |
+| **Default** (Boot not held) | Remount CIRCUITPY **writable by CircuitPython** — production / `error.txt` logging |
+| **Deploy** (hold **Boot** while onboard NeoPixel is white, ~1 s) | Leave CIRCUITPY **writable by the computer** (CircuitPython read-only) |
+| **Deep-sleep wake** (`alarm.wake_alarm` set) | Skip the Boot window; stay CircuitPython-writable |
+
+After a USB deploy, reset **without** holding Boot so the next run is CircuitPython-writable again. Pattern based on [Adafruit QT Py ESP32-S2 Storage](https://learn.adafruit.com/adafruit-qt-py-esp32-s2/storage).
 
 ## Target firmware
 
@@ -147,7 +176,7 @@ When your work is guided by a rule here, cite the section — e.g. *AGENTS.md �
 
 ```
 code.py                 # Entry point; selects PRODUCTION / DEBUG / SHOW mode
-boot.py                 # A0 switch remounts filesystem for dev vs deploy
+boot.py                 # Boot button: CP-writable by default; hold Boot for USB deploy
 config.py               # Non-secret settings (timezone, alert window, Wi-Fi retries)
 secrets.py              # Wi-Fi SSID/password, bin schedule or council API URL (copy from secrets.py.example; gitignored)
 secrets.py.example      # Template for secrets.py — safe to commit
@@ -155,12 +184,12 @@ memory.txt              # Default NVM state template (first boot)
 blink_patterns.py       # Legacy glow patterns — migrate into controllers/glow_bit.py then delete
 
 app/                    # Runtime modes (orchestration)
-  bindicator.py         # Production wake loop (Wi-Fi, memory, lights, deep sleep)
+  production.py         # Production wake loop (Wi-Fi, memory, lights, deep sleep)
   debug.py              # Sequential hardware/network checklist
   demo.py               # Show mode: random colours on button wake
 
 controllers/            # Hardware and persistence (one class per module)
-  button.py             # A2 LED, A3 input; PinAlarm wake-on-press
+  button.py             # A2 LED, A3 input (active-high); PinAlarm wake-on-press
   glow_bit.py           # NeoPixel strip on A1
   wifi.py               # Wi-Fi, NTP, HTTP
   time.py               # Light/deep sleep alarms
@@ -171,6 +200,7 @@ model/                  # Domain types
 
 helpers/                # Shared utilities (time structs, alert math, wake reason)
   __init__.py
+  log_error.py          # Overwrite error.txt with exception traceback (production)
 
 councils/               # Council-specific schedule parsers
   monash.py             # Monash Council HTML-in-JSON waste API
@@ -189,23 +219,23 @@ Each package folder (`app/`, `controllers/`, `model/`, `helpers/`, `councils/`) 
 
 | Mode constant        | Behavior                                                                          |
 | -------------------- | --------------------------------------------------------------------------------- |
-| `RunMode.PRODUCTION` | `app.bindicator.start_program(False)` — full schedule, deep sleep, error re-raise |
+| `RunMode.PRODUCTION` | `app.production.start_program(False)` — full schedule, deep sleep, error re-raise |
 | `RunMode.DEBUG`      | `app.debug.debug()` — sequential checklist (Wi-Fi, Monash, memory, button test)   |
 | `RunMode.SHOW`       | `app.demo.demo()` — random top/bottom colors on button press                      |
 
 
 Change the `start_bindicator(...)` argument at the bottom of `code.py` to switch modes (e.g. `RunMode.DEBUG`).
 
-## Production workflow (`app/bindicator.py`)
+## Production workflow (`app/production.py`)
 
-Each wake from deep sleep **restarts the CircuitPython interpreter**. `boot.py` runs first (A0 filesystem toggle), then `code.py` calls `start_program(False)`. One production cycle looks like this:
+Each wake from deep sleep **restarts the CircuitPython interpreter**. `boot.py` runs first (filesystem remount — see *Filesystem remount*), then `code.py` calls `start_program(False)`. One production cycle looks like this:
 
 ### Production flow diagram
 
 ```mermaid
 flowchart TD
     Wake([Wake: power-on, time alarm, or button press])
-    Boot[boot.py — optional A0 filesystem remount]
+    Boot[boot.py — CP-writable default; Boot+white = USB deploy]
     Entry[code.py — start_bindicator PRODUCTION]
     Init[Init controllers + load NVM state]
     Startup[GlowBit: white top and bottom]
@@ -228,7 +258,7 @@ flowchart TD
     Save[Save state to NVM]
     PinAlarm[Release button pins; arm PinAlarm]
     Sleep[Deep sleep until time alarm or button]
-    Error[Exception: GlowBit solid red]
+    Error[Exception: log_error → error.txt; GlowBit solid red]
     Rethrow[Re-raise — production catch_errors=False]
 
     Wake --> Boot --> Entry --> Init --> Startup --> WakeReason --> NeedSync
@@ -287,7 +317,7 @@ Alert window defaults (in `config.py`): lights from **12:00** the day before col
 | Module                    | Responsibility                                                                     |
 | ------------------------- | ---------------------------------------------------------------------------------- |
 | `controllers/glow_bit.py` | NeoPixel on A1; top (pixels 0–3) / bottom (4–7); bin colors RED/YELLOW/GREEN       |
-| `controllers/button.py`   | A2 LED, A3 input; `build_pin_alarm()` for wake-on-press (must `deinit` pins first) |
+| `controllers/button.py`   | A2 LED, A3 input (active-high); `build_pin_alarm()` wake-on-press (`value=True`; must `deinit` pins first) |
 | `controllers/wifi.py`     | Connect, NTP, HTTP GET (`adafruit_requests`), optional JSON                        |
 | `controllers/time.py`     | Light/deep sleep via `alarm.time.TimeAlarm` + optional `PinAlarm`                  |
 | `controllers/memory.py`   | JSON state in NVM via `foamyguy_nvm_helper`; schema in `memory.txt`                |
@@ -349,6 +379,8 @@ NVM JSON uses snake_case keys (`last_wake_time`, `last_clock_sync`, `current_not
 
 Use `scripts/copy_to_board.ps1` to copy firmware from the repo to the mounted board drive. Pass the drive letter as `D` or `D:` (same as `scripts/space_remaining.ps1`).
 
+For the host to write CIRCUITPY, enter **deploy mode** first: hold **Boot** while the onboard NeoPixel is white (~1 s at power-on / reset), then run the copy script. Reset without holding Boot afterwards so production can write `error.txt` again.
+
 **Agent rule:** whenever you run `copy_to_board.ps1` to deploy code, always run `space_remaining.ps1` immediately afterwards with the same drive letter — e.g. `.\scripts\space_remaining.ps1 D` — and report the free-space summary to the user.
 
 
@@ -359,9 +391,10 @@ Update CircuitPython and libraries periodically — bundled versions are in `dep
 
 - No full CPython stdlib (no `xml.etree` — project ships minimal `ElementTree.py`).
 - Cooperative multitasking via `asyncio` is possible but Wi-Fi/requests async support was immature when written; boot animations during Wi-Fi connect were deferred.
-- Deep sleep **restarts** the interpreter; preserve state in NVM, not globals.
-- `alarm.pin.PinAlarm` requires the pin be released (`deinit`) before sleep — see `controllers.button.ButtonController.build_pin_alarm`.
+- Deep sleep **restarts** the interpreter; preserve state in NVM, not globals. `boot.py` runs again on each wake — deep-sleep wakes skip the Boot deploy window (see *Filesystem remount*).
+- `alarm.pin.PinAlarm` requires the pin be released (`deinit`) before sleep — see `controllers.button.ButtonController.build_pin_alarm`. Tactile button on A3 is **active-high** (`PinAlarm` `value=True`); see *Button polarity*.
 - Prefer `alarm` [wake reason API](https://learn.adafruit.com/deep-sleep-with-circuitpython/alarms-and-sleep#what-woke-me-up-3079890) over ad-hoc time comparisons where possible.
+- CIRCUITPY writes from code (e.g. `helpers.log_error` → `error.txt`) require CircuitPython-writable remount — the default after `boot.py` unless Boot was held for deploy.
 
 ## Known issues and backlog
 
@@ -370,7 +403,6 @@ From code review and project notes — fix when touching related areas:
 
 | Area                                | Issue                                                                                     |
 | ----------------------------------- | ----------------------------------------------------------------------------------------- |
-| `app.bindicator.get_next_wake_time` | Loop always advances index to `len(notifications)` → likely index error                   |
 | Hardware                            | GlowBit heat on 5 V over long periods — consider resistor on 5 V line or lower brightness |
 
 

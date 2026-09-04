@@ -3,7 +3,13 @@
 from __future__ import annotations
 
 from time import struct_time, mktime, time, localtime
-from helpers import struct_time_to_string, string_to_struct_time, get_today_as_epoch, get_days_to_seconds
+from helpers import (
+    struct_time_to_string,
+    string_to_struct_time,
+    get_today_as_epoch,
+    get_days_to_seconds,
+    format_struct_time,
+)
 
 Color = tuple
 
@@ -33,7 +39,7 @@ class Bin:
     def __str__(self) -> str:
         return "Label: %s, NextCollectionDate: %s, Color: %s" % (
             self.label,
-            self.next_collection_date,
+            format_struct_time(self.next_collection_date),
             self.color,
         )
 

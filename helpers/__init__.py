@@ -48,6 +48,20 @@ def struct_time_to_string(value: Optional[struct_time]) -> Optional[str]:
     )
 
 
+def format_struct_time(value: Optional[struct_time]) -> str:
+    """Human-readable timestamp for serial logs (YYYY-MM-DD HH:MM:SS)."""
+    if value is None:
+        return "None"
+    return "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}".format(
+        value.tm_year,
+        value.tm_mon,
+        value.tm_mday,
+        value.tm_hour,
+        value.tm_min,
+        value.tm_sec,
+    )
+
+
 def convert_start_time_to_seconds(value: str) -> int:
     """Convert HH:MM alert_begin to seconds before midnight on collection day."""
     raw_time = value.split(":")

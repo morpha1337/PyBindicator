@@ -14,7 +14,10 @@ except ImportError:
 
 
 class ButtonController:
-    """Drive the button LED and read press state; pins must be released before sleep."""
+    """Drive the button LED and read press state; pins must be released before sleep.
+
+    Hardware is active-high: pressed = True, released = False.
+    """
 
     button_led_pin = board.A2
     button_pin = board.A3
@@ -40,10 +43,10 @@ class ButtonController:
         self.led.deinit()
 
     def build_pin_alarm(self) -> alarm.pin.PinAlarm:
-        """Release pins and return a PinAlarm for wake-on-button."""
+        """Release pins and return a PinAlarm for wake-on-press (active-high)."""
         self.release_pins()
         # PinAlarm requires the pin be deinit'd first on ESP32-S2.
-        return alarm.pin.PinAlarm(pin=self.button_pin, value=False, pull=False)
+        return alarm.pin.PinAlarm(pin=self.button_pin, value=True, pull=False)
 
     def enable_button(self) -> None:
         print("enabled button")
@@ -59,6 +62,7 @@ class ButtonController:
             self.button = None
 
     def read_button_state(self) -> bool:
+        """Return True when pressed, False when released (active-high)."""
         return self.button.value
 
     def await_reset(self) -> None:
@@ -66,7 +70,7 @@ class ButtonController:
         self.enable_button()
         while True:
             time.sleep(0.25)
-            if not self.button.value:
+            if self.button.value:
                 return
 
     def blink(self) -> None:
@@ -80,14 +84,14 @@ class ButtonController:
         """Debug helper: print press state for a fixed duration."""
         self.enable_button()
         end_time = time.monotonic() + duration_seconds
-        print("Button test for %s seconds (pull-up: Pressed/Released)..." % duration_seconds)
+        print("Button test for %s seconds (active-high: True=Pressed)..." % duration_seconds)
         while time.monotonic() < end_time:
             time.sleep(0.25)
-            # Pull-up wiring: True = released, False = pressed.
+            # Active-high: True = pressed, False = released.
             if self.button.value:
+                self.led.value = True
+                print("Pressed")
+            else:
                 self.led.value = False
                 print("Released")
-            else:
-                print("Pressed")
-                self.led.value = True
         self.disable_button()

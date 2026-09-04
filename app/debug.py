@@ -5,6 +5,7 @@ from __future__ import annotations
 from secrets import secrets
 from config import config
 from model.bin import Bin
+from helpers import format_struct_time
 from controllers.button import ButtonController
 from controllers.glow_bit import GlowBitController, WHITE, YELLOW
 from controllers.wifi import WifiController
@@ -47,7 +48,7 @@ def debug() -> None:
 
     print("[6/8] NVM last wake time...")
     gbit.show_loading(75)
-    print("Last Boot Time Was: ", memory.last_wake_time)
+    print("Last Boot Time Was: ", format_struct_time(memory.last_wake_time))
     memory.last_wake_time = current_time
 
     print("[7/8] Monash schedule + active bins on GlowBit...")

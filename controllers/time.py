@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import alarm
 import time
-from helpers import convert_start_time_to_seconds, convert_end_time_to_seconds
+from helpers import (
+    convert_start_time_to_seconds,
+    convert_end_time_to_seconds,
+    format_struct_time,
+)
 
 try:
     from typing import Optional
@@ -44,7 +48,7 @@ class TimeController:
 
         print("going into LIGHT sleep...")
         if next_wake_time is not None:
-            print("next wake time: ", time.localtime(next_wake_time))
+            print("next wake time: ", format_struct_time(time.localtime(next_wake_time)))
         if pin_alarm is not None:
             print("Pin Alarm is active.")
         print("================")
@@ -67,7 +71,7 @@ class TimeController:
 
         print("going into DEEP sleep now...")
         if next_wake_time is not None:
-            print("next wake time: ", time.localtime(next_wake_time))
+            print("next wake time: ", format_struct_time(time.localtime(next_wake_time)))
         if pin_alarm is not None:
             print("Pin Alarm is active.")
         print("================")

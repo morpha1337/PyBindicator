@@ -5,7 +5,13 @@ from __future__ import annotations
 from secrets import secrets
 from config import config
 from model.bin import Bin, convert_json_to_bin
-from helpers import get_wake_source, needs_clock_sync, WakeSource, log_error
+from helpers import (
+    get_wake_source,
+    needs_clock_sync,
+    WakeSource,
+    log_error,
+    format_struct_time,
+)
 from controllers.button import ButtonController
 from controllers.glow_bit import GlowBitController, WHITE, RED
 from controllers.wifi import WifiController
@@ -31,8 +37,8 @@ def start_program(catch_errors: bool) -> None:
     try:
         wake_source = get_wake_source()
         print("Wake source: ", wake_source)
-        print("Last Boot Time Was: ", memory.last_wake_time)
-        print("Last Clock Sync Was: ", memory.last_clock_sync)
+        print("Last Boot Time Was: ", format_struct_time(memory.last_wake_time))
+        print("Last Clock Sync Was: ", format_struct_time(memory.last_clock_sync))
 
         if needs_clock_sync(
             wake_source,
@@ -44,7 +50,7 @@ def start_program(catch_errors: bool) -> None:
             memory.last_clock_sync = current_time
         else:
             current_time = time.localtime()
-            print("Skipping Wi-Fi; using RTC time: ", current_time)
+            print("Skipping Wi-Fi; using RTC time: ", format_struct_time(current_time))
 
         if wake_source == WakeSource.TIME:
             # Time alarm — update notification state based on current time.
@@ -84,7 +90,6 @@ def start_program(catch_errors: bool) -> None:
         gbit.bottom(RED)
 
         if catch_errors:
-            print(e)
             button.await_reset()
             gbit.turn_off()
             reset()
@@ -101,14 +106,11 @@ def get_active_notifications(
 
 def get_next_wake_time(notifications: list[Bin]) -> struct_time:
     """Return the struct_time of the earliest upcoming collection."""
+    if not notifications:
+        raise ValueError("cannot schedule wake with no notifications")
 
-    def get_next_collection_date(entry: Bin) -> float:
+    def collection_epoch(entry: Bin) -> float:
         return time.mktime(entry.next_collection_date)
 
-    notifications.sort(key=get_next_collection_date)
-
-    index = 0
-    while index < len(notifications):
-        index += 1
-
-    return notifications[index].next_collection_date
+    notifications.sort(key=collection_epoch)
+    return notifications[0].next_collection_date

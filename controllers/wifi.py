@@ -10,6 +10,7 @@ import ssl
 import socketpool
 import json
 from time import struct_time
+from helpers import format_struct_time
 
 
 class WifiController:
@@ -72,7 +73,7 @@ class WifiController:
                 tries += 1
                 continue
 
-        print("The current Date Time is: ", ntp.datetime)
+        print("The current Date Time is: ", format_struct_time(ntp.datetime))
         return ntp.datetime
 
     def print_network_info(self) -> None:
