@@ -5,6 +5,8 @@ from __future__ import annotations
 from time import struct_time, localtime, mktime
 import alarm
 
+from helpers.log_error import log_error
+
 try:
     from typing import Optional
 except ImportError:

@@ -5,7 +5,7 @@ from __future__ import annotations
 from secrets import secrets
 from config import config
 from model.bin import Bin, convert_json_to_bin
-from helpers import get_wake_source, needs_clock_sync, WakeSource
+from helpers import get_wake_source, needs_clock_sync, WakeSource, log_error
 from controllers.button import ButtonController
 from controllers.glow_bit import GlowBitController, WHITE, RED
 from controllers.wifi import WifiController
@@ -79,6 +79,7 @@ def start_program(catch_errors: bool) -> None:
         t_cont.deep_sleep(time.mktime(next_wake_time), pin_alarm)
 
     except Exception as e:
+        log_error(e)
         gbit.top(RED)
         gbit.bottom(RED)
 

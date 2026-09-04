@@ -1,16 +1,28 @@
-# SPDX-FileCopyrightText: 2017 Limor Fried for Adafruit Industries
-#
+# SPDX-FileCopyrightText: 2021 Kattni Rembor for Adafruit Industries
 # SPDX-License-Identifier: MIT
 
-"""Remount CIRCUITPY read/write when A0 is grounded (dev workflow)."""
+"""Filesystem mode at boot: CircuitPython writable by default; hold Boot for USB deploy."""
 
+import time
+import alarm
 import board
 import digitalio
 import storage
+import neopixel
 
-switch = digitalio.DigitalInOut(board.A0)
-switch.direction = digitalio.Direction.INPUT
-switch.pull = digitalio.Pull.UP
+pixel = neopixel.NeoPixel(board.NEOPIXEL, 1)
+button = digitalio.DigitalInOut(board.BUTTON)
+button.switch_to_input(pull=digitalio.Pull.UP)
 
-# If A0 is connected to ground, the host can write files while code is running.
-storage.remount("/", switch.value)
+# Deep-sleep wakes re-run boot.py — skip the deploy window and stay CP-writable.
+if alarm.wake_alarm is None:
+    # White NeoPixel = hold Boot now to leave CIRCUITPY writable by the computer.
+    pixel.fill((255, 255, 255))
+    time.sleep(3)
+    pixel.fill((0, 0, 0))
+
+    # Pressed (False) → host writable (CP read-only). Released → CP writable.
+    storage.remount("/", readonly=not button.value)
+else:
+    storage.remount("/", False)
+``

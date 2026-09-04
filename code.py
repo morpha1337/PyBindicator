@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.bindicator import start_program
+from app.production import start_program
 from app.debug import debug
 from app.demo import demo
 
@@ -19,7 +19,7 @@ def start_bindicator(mode: int) -> None:
     """Dispatch to the selected runtime mode."""
     if mode == RunMode.PRODUCTION:
         print("Starting the Bindicator in Production Mode!")
-        start_program(False)
+        start_program(True)
     elif mode == RunMode.DEBUG:
         print("Starting the Bindicator in Debug Mode!")
         debug()
