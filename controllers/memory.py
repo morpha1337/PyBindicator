@@ -49,10 +49,10 @@ class MemoryController:
         }
 
         encoded_state = json.dumps(json_obj)
+        print("================")
         print("Saving Memory State to NVM:")
         print(encoded_state)
         nvm_helper.save_data(encoded_state, test_run=False, verbose=False)
-        print("================")
 
     def load_from_mem(self) -> None:
         """Load state from NVM; seed from memory.txt on first boot or corruption."""

@@ -72,6 +72,8 @@ def start_program(catch_errors: bool) -> None:
         active_notifs = get_active_notifications(
             memory.notifications, t_cont.alert_begin, t_cont.alert_end
         )
+        print("=============")
+        print("[", len(active_notifs), "] active notifications.")
 
         if active_notifs:
             gbit.show_notifications(active_notifs)
@@ -84,6 +86,7 @@ def start_program(catch_errors: bool) -> None:
         memory.next_wake_time = next_wake_time
         memory.save_to_mem()
 
+        print("==============")
         pin_alarm = button.build_pin_alarm()
         t_cont.deep_sleep(time.mktime(next_wake_time), pin_alarm)
 
