@@ -49,14 +49,17 @@ class MemoryController:
         }
 
         encoded_state = json.dumps(json_obj)
+        print("Saving Memory State to NVM:")
         print(encoded_state)
         nvm_helper.save_data(encoded_state, test_run=False, verbose=False)
-        print("Saved Memory State to NVM.")
+        print("================")
 
     def load_from_mem(self) -> None:
         """Load state from NVM; seed from memory.txt on first boot or corruption."""
         try:
             encoded_string = nvm_helper.read_data()
+            print("===============")
+            print("Loading Memory State from NVM:")
             print(encoded_string)
             self._state = json.loads(encoded_string)
             self.last_wake_time = string_to_struct_time(self._state["last_wake_time"])

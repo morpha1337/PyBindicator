@@ -31,14 +31,17 @@ def start_program(catch_errors: bool) -> None:
     t_cont = TimeController(config["time"])
     memory = MemoryController()
 
-    gbit.top(WHITE)
-    gbit.bottom(WHITE)
+    gbit.bootup_anim()
+    # gbit.bottom(WHITE)
 
     try:
         wake_source = get_wake_source()
+
+        print("==========")
         print("Wake source: ", wake_source)
         print("Last Boot Time Was: ", format_struct_time(memory.last_wake_time))
         print("Last Clock Sync Was: ", format_struct_time(memory.last_clock_sync))
+        print("==========")
 
         if needs_clock_sync(
             wake_source,

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import neopixel
+from rainbowio import colorwheel
 import board
 import random
+import time
 from math import ceil, floor
 from model.bin import Bin
 
@@ -84,13 +86,6 @@ class GlowBitController:
 
     def show_loading(self, percent: int) -> None:
         """Light a progress bar; color shifts red → yellow → green by percent."""
-        number_lit = (percent * self.num_pixels) / 100
-
-        # CircuitPython has no round(); manual ceil/floor instead.
-        if number_lit % 1 >= 0.5:
-            number_lit = ceil(number_lit)
-        else:
-            number_lit = floor(number_lit)
 
         # Calculate color based on percent; red → yellow → green gradient.
         if percent <= 0:
@@ -104,9 +99,54 @@ class GlowBitController:
             blend = (percent - 50) / 50
             color = (int(255 * (1 - blend)), int(170 + 85 * blend), 0)
 
-        for index in range(self.num_pixels):
-            if index < number_lit:
-                self.pixels[index] = color
-            else:
-                self.pixels[index] = OFF
+        self.pixels.fill(color)
         self.pixels.show()
+
+    def bootup_anim(self) -> None:
+        print("Boot Up Animation Begun")
+        red = 0
+        blue = 0
+        green = 0
+        while red < 255:
+            time.sleep(0.01)
+            self.pixels.fill((red, blue, green))
+            red += 1
+        while blue < 255:
+            time.sleep(0.01)
+            self.pixels.fill((red, blue, green))
+            blue += 1
+        while red > 0:
+            time.sleep(0.01)
+            self.pixels.fill((red, blue, green))
+            red -= 1
+        while green < 255:
+            time.sleep(0.01)
+            self.pixels.fill((red, blue, green))
+            green += 1
+        while blue > 0:
+            time.sleep(0.01)
+            self.pixels.fill((red, blue, green))
+            blue -= 1
+        while red < 255:
+            time.sleep(0.01)
+            self.pixels.fill((red, blue, green))
+            red += 1
+        while blue < 255:
+            time.sleep(0.01)
+            self.pixels.fill((red, blue, green))
+            blue += 1
+        time.sleep(1)
+        self.pixels.fill((0, 0, 0))
+        for i in range(255):
+            j = 255 - i
+            self.pixels.fill((j,j,j))
+            time.sleep(0.01)
+
+    def init_glowbit_anim(self) -> None:
+        print("Init Glowbit Animation Begun")
+        for j in range(255):
+            for i in range(self.num_pixels):
+                rc_index = (i * 256 // self.num_pixels) + j
+                self.pixels[i] = colorwheel(rc_index & 255)
+            self.pixels.show()
+            time.sleep(0.1)
