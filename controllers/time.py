@@ -44,9 +44,13 @@ class TimeController:
 
         # TimeAlarm(monotonic_time=...) needs duration from now, not epoch.
         duration = epoch_wake_time - time.time()
-        # Past targets would raise; wake almost immediately instead.
-        if duration < 0:
-            duration = 0.1
+        # Past/immediate targets must not become a near-zero sleep (boot loop).
+        if duration <= 0:
+            print(
+                "Wake time already past; sleeping 1h to avoid reboot loop. "
+                "Caller should schedule a future epoch."
+            )
+            duration = 3600
         return time.monotonic() + duration
 
     def light_sleep(

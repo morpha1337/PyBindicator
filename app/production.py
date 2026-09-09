@@ -61,7 +61,8 @@ def start_program(catch_errors: bool) -> None:
             # Button press — dismiss notifications.
             memory.notification_expiry_time = current_time
         else:
-            # Cold boot — clear notifications and seed from secrets.
+            # Cold boot — clear notifications.
+            print("Cold Boot - Clearing Memory...")
             memory.clear_notifications()
             
             
@@ -73,6 +74,12 @@ def start_program(catch_errors: bool) -> None:
             for bin_inst in bins:
                 print("\t", bin_inst)
 
+        next_wake_time = get_next_wake_time(memory.notifications)
+
+        memory.last_wake_time = current_time
+        memory.next_wake_time = next_wake_time
+        memory.save_to_mem()
+
         active_notifs = get_active_notifications(
             memory.notifications, t_cont.alert_begin, t_cont.alert_end, memory.notification_expiry_time
         )
@@ -82,15 +89,7 @@ def start_program(catch_errors: bool) -> None:
         if active_notifs:
             gbit.show_notifications(active_notifs)
         else:
-            gbit.turn_off()
-
-        next_wake_time = get_next_wake_time(memory.notifications)
-
-        memory.last_wake_time = current_time
-        memory.next_wake_time = next_wake_time
-        memory.save_to_mem()
-
-        gbit.shutdown_anim() # play shutdown animation on GlowBit
+             gbit.shutdown_anim() # play shutdown animation on GlowBit only if there are no notifcations
 
         print("==============")
         pin_alarm = button.build_pin_alarm()
@@ -129,12 +128,28 @@ def get_active_notifications(
 
 
 def get_next_wake_time(notifications: list[Bin]) -> struct_time:
-    """Return the struct_time of the earliest upcoming collection."""
+    """Return the earliest collection time strictly in the future.
+
+    Collection dates on/before now are stepped forward by frequency so deep
+    sleep never arms a past TimeAlarm (which would reboot-loop).
+    """
     if not notifications:
         raise ValueError("cannot schedule wake with no notifications")
 
-    def collection_epoch(entry: Bin) -> float:
-        return time.mktime(entry.next_collection_date)
+    now = time.time()
+    soonest = None
+    for entry in notifications:
+        epoch = time.mktime(entry.next_collection_date)
+        freq = entry.collection_frequency
+        if freq > 0:
+            while epoch <= now:
+                epoch += freq
+        elif epoch <= now:
+            continue
+        if soonest is None or epoch < soonest:
+            soonest = epoch
 
-    notifications.sort(key=collection_epoch)
-    return notifications[0].next_collection_date
+    if soonest is None:
+        raise ValueError("cannot schedule wake with no future collection")
+
+    return time.localtime(soonest)
