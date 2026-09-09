@@ -31,10 +31,9 @@ def start_program(catch_errors: bool) -> None:
     t_cont = TimeController(config["time"])
     memory = MemoryController()
 
-    gbit.bootup_anim()
-    # gbit.bottom(WHITE)
-
     try:
+        gbit.bootup_anim() # play bootup animation on GlowBit
+
         wake_source = get_wake_source()
 
         print("==========")
@@ -59,9 +58,14 @@ def start_program(catch_errors: bool) -> None:
             # Time alarm — update notification state based on current time.
             memory.update_notifications()
         elif wake_source == WakeSource.BUTTON:
-            # Button press — discard stale notification state.
+            # Button press — dismiss notifications.
+            memory.notification_expiry_time = current_time
+        else:
+            # Cold boot — clear notifications and seed from secrets.
             memory.clear_notifications()
-
+            
+            
+        # If no notifications are present, seed from secrets.
         if not memory.notifications:
             bins = convert_json_to_bin(secrets["bins"])
             memory.add_notifications(bins)
@@ -70,7 +74,7 @@ def start_program(catch_errors: bool) -> None:
                 print("\t", bin_inst)
 
         active_notifs = get_active_notifications(
-            memory.notifications, t_cont.alert_begin, t_cont.alert_end
+            memory.notifications, t_cont.alert_begin, t_cont.alert_end, memory.notification_expiry_time
         )
         print("=============")
         print("[", len(active_notifs), "] active notifications.")
@@ -85,6 +89,8 @@ def start_program(catch_errors: bool) -> None:
         memory.last_wake_time = current_time
         memory.next_wake_time = next_wake_time
         memory.save_to_mem()
+
+        gbit.shutdown_anim() # play shutdown animation on GlowBit
 
         print("==============")
         pin_alarm = button.build_pin_alarm()
@@ -104,10 +110,22 @@ def start_program(catch_errors: bool) -> None:
 
 
 def get_active_notifications(
-    bins: list[Bin], start_time: int, end_time: int
+    bins: list[Bin], start_time: int, end_time: int, dismiss_time: struct_time = None
 ) -> list[Bin]:
-    """Return bins whose collection date falls within the configured alert window."""
-    return list(filter(lambda x: x.is_active(start_time, end_time), bins))
+    """Return bins in the alert window, excluding any dismissed for the current alert."""
+    active_notifs = list(filter(lambda x: x.is_active(start_time, end_time), bins))
+
+    if dismiss_time is not None:
+        # Keep only bins whose alert window had not started yet at dismiss time.
+        dismiss_epoch = time.mktime(dismiss_time)
+        active_notifs = list(
+            filter(
+                lambda x: time.mktime(x.next_collection_date) - start_time > dismiss_epoch,
+                active_notifs,
+            )
+        )
+
+    return active_notifs
 
 
 def get_next_wake_time(notifications: list[Bin]) -> struct_time:

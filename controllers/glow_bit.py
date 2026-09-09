@@ -108,39 +108,44 @@ class GlowBitController:
         blue = 0
         green = 0
         while red < 255:
-            time.sleep(0.01)
+            time.sleep(0.001)
             self.pixels.fill((red, blue, green))
             red += 1
         while blue < 255:
-            time.sleep(0.01)
+            time.sleep(0.001)
             self.pixels.fill((red, blue, green))
             blue += 1
         while red > 0:
-            time.sleep(0.01)
+            time.sleep(0.001)
             self.pixels.fill((red, blue, green))
             red -= 1
         while green < 255:
-            time.sleep(0.01)
+            time.sleep(0.001)
             self.pixels.fill((red, blue, green))
             green += 1
         while blue > 0:
-            time.sleep(0.01)
+            time.sleep(0.001)
             self.pixels.fill((red, blue, green))
             blue -= 1
         while red < 255:
-            time.sleep(0.01)
+            time.sleep(0.001)
             self.pixels.fill((red, blue, green))
             red += 1
         while blue < 255:
-            time.sleep(0.01)
+            time.sleep(0.001)
             self.pixels.fill((red, blue, green))
             blue += 1
         time.sleep(1)
         self.pixels.fill((0, 0, 0))
+
+    def shutdown_anim(self) -> None:
+        print("Shutdown Animation Begun")
+        self.pixels.fill((0, 0, 0))
         for i in range(255):
             j = 255 - i
             self.pixels.fill((j,j,j))
-            time.sleep(0.01)
+            time.sleep(0.001)
+        self.turn_off()
 
     def init_glowbit_anim(self) -> None:
         print("Init Glowbit Animation Begun")
