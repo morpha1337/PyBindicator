@@ -72,4 +72,4 @@ def debug() -> None:
 
     print("=== Checklist complete — light sleep 5s (button wake enabled) ===")
     pin_alarm = button.build_pin_alarm()
-    t_cont.light_sleep(5, pin_alarm)
+    t_cont.light_sleep(time.time() + 5, pin_alarm)

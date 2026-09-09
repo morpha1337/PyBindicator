@@ -37,15 +37,27 @@ class TimeController:
 
         time.sleep(next_wake_time)
 
+    def _monotonic_wake_from_epoch(self, epoch_wake_time: Optional[float]) -> float:
+        """Convert a wall-clock wake (epoch seconds) to a TimeAlarm monotonic_time."""
+        if epoch_wake_time is None:
+            return time.monotonic() + self.sleep_time
+
+        # TimeAlarm(monotonic_time=...) needs duration from now, not epoch.
+        duration = epoch_wake_time - time.time()
+        # Past targets would raise; wake almost immediately instead.
+        if duration < 0:
+            duration = 0.1
+        return time.monotonic() + duration
+
     def light_sleep(
         self,
         next_wake_time: Optional[float] = None,
         pin_alarm: Optional[alarm.pin.PinAlarm] = None,
     ) -> None:
-        """Light sleep until time alarm (and optional button alarm)."""
-        if next_wake_time is None:
-            next_wake_time = time.monotonic() + self.sleep_time
+        """Light sleep until time alarm (and optional button alarm).
 
+        next_wake_time is wall-clock epoch seconds (time.time() / mktime).
+        """
         print("going into LIGHT sleep...")
         if next_wake_time is not None:
             print("next wake time: ", format_struct_time(time.localtime(next_wake_time)))
@@ -53,7 +65,9 @@ class TimeController:
             print("Pin Alarm is active.")
         print("================")
 
-        time_alarm = alarm.time.TimeAlarm(monotonic_time=next_wake_time)
+        time_alarm = alarm.time.TimeAlarm(
+            monotonic_time=self._monotonic_wake_from_epoch(next_wake_time)
+        )
 
         if self.use_external_wake_up and pin_alarm:
             alarm.light_sleep_until_alarms(time_alarm, pin_alarm)
@@ -65,10 +79,10 @@ class TimeController:
         next_wake_time: Optional[float] = None,
         pin_alarm: Optional[alarm.pin.PinAlarm] = None,
     ) -> None:
-        """Deep sleep; restarts the interpreter on wake."""
-        if next_wake_time is None:
-            next_wake_time = time.monotonic() + self.sleep_time
+        """Deep sleep; restarts the interpreter on wake.
 
+        next_wake_time is wall-clock epoch seconds (time.time() / mktime).
+        """
         print("going into DEEP sleep now...")
         if next_wake_time is not None:
             print("next wake time: ", format_struct_time(time.localtime(next_wake_time)))
@@ -76,7 +90,9 @@ class TimeController:
             print("Pin Alarm is active.")
         print("================")
 
-        time_alarm = alarm.time.TimeAlarm(monotonic_time=next_wake_time)
+        time_alarm = alarm.time.TimeAlarm(
+            monotonic_time=self._monotonic_wake_from_epoch(next_wake_time)
+        )
 
         if self.use_external_wake_up and pin_alarm:
             alarm.exit_and_deep_sleep_until_alarms(time_alarm, pin_alarm)

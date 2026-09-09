@@ -34,5 +34,4 @@ def demo() -> None:
         time.sleep(1)
 
         pin_alarm = button.build_pin_alarm()
-        next_wake_time = 10
-        t_cont.light_sleep(next_wake_time, pin_alarm)
+        t_cont.light_sleep(time.time() + 10, pin_alarm)
