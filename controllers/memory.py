@@ -76,6 +76,7 @@ class MemoryController:
                     string_to_struct_time(notif["next_collection_date"]),
                     tuple(notif["color"]),
                     notif["collection_frequency"],
+                    string_to_struct_time(notif["next_collection_end_date"]),
                 )
                 self.notifications.append(new_bin)
 

@@ -1,14 +1,10 @@
-"""Deep/light sleep and alert-window time conversion."""
+"""Deep/light sleep via TimeAlarm and optional PinAlarm."""
 
 from __future__ import annotations
 
 import alarm
 import time
-from helpers import (
-    convert_start_time_to_seconds,
-    convert_end_time_to_seconds,
-    format_struct_time,
-)
+from helpers import format_struct_time
 
 try:
     from typing import Optional
@@ -17,19 +13,14 @@ except ImportError:
 
 
 class TimeController:
-    """Schedule sleep alarms and expose alert window as seconds before/after collection."""
+    """Schedule light/deep sleep until a time alarm and optional button alarm."""
 
     sleep_time: float
     use_external_wake_up: bool
-    alert_begin: int
-    alert_end: int
 
     def __init__(self, config: dict) -> None:
         self.sleep_time = float(config["sleep_time"])
         self.use_external_wake_up = bool(config["use_external_wake_up"])
-        # alert_begin/end are seconds before/after midnight on collection day
-        self.alert_begin = convert_start_time_to_seconds(str(config["alert_begin"]))
-        self.alert_end = convert_end_time_to_seconds(str(config["alert_end"]))
 
     def sleep(self, next_wake_time: Optional[float] = None) -> None:
         if next_wake_time is None:
@@ -92,11 +83,13 @@ class TimeController:
             print("next wake time: ", format_struct_time(time.localtime(next_wake_time)))
         if pin_alarm is not None:
             print("Pin Alarm is active.")
-        print("================")
 
         time_alarm = alarm.time.TimeAlarm(
             monotonic_time=self._monotonic_wake_from_epoch(next_wake_time)
         )
+
+        print("Time Alarm is active.")
+        print("================")
 
         if self.use_external_wake_up and pin_alarm:
             alarm.exit_and_deep_sleep_until_alarms(time_alarm, pin_alarm)

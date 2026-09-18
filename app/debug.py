@@ -54,15 +54,13 @@ def debug() -> None:
     print("[7/8] Monash schedule + active bins on GlowBit...")
     gbit.show_loading(87)
     bins = monash.get_bin_data(secrets["bin_data"], wifi)
-    active_bins = list(
-        filter(lambda x: x.is_active(t_cont.alert_begin, t_cont.alert_end), bins)
-    )
+    active_bins = list(filter(lambda x: x.is_active(), bins))
     memory.notifications = active_bins
     gbit.show_notifications(memory.notifications)
 
     memory.clear_notifications()
     memory.add_notification(
-        Bin("test3", time.localtime(time.time()), YELLOW, 0)
+        Bin("test3", time.localtime(time.time()), YELLOW, 0, time.localtime(time.time()))
     )
     memory.save_to_mem()
 

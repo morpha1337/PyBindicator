@@ -74,15 +74,15 @@ def start_program(catch_errors: bool) -> None:
             for bin_inst in bins:
                 print("\t", bin_inst)
 
-        next_wake_time = get_next_wake_time(memory.notifications)
+        active_notifs = get_active_notifications(
+            memory.notifications, memory.notification_expiry_time
+        )
+        next_wake_time = get_next_wake_time(memory.notifications, active_notifs)
 
         memory.last_wake_time = current_time
         memory.next_wake_time = next_wake_time
         memory.save_to_mem()
 
-        active_notifs = get_active_notifications(
-            memory.notifications, t_cont.alert_begin, t_cont.alert_end, memory.notification_expiry_time
-        )
         print("=============")
         print("[", len(active_notifs), "] active notifications.")
 
@@ -109,17 +109,17 @@ def start_program(catch_errors: bool) -> None:
 
 
 def get_active_notifications(
-    bins: list[Bin], start_time: int, end_time: int, dismiss_time: struct_time = None
+    bins: list[Bin], dismiss_time: struct_time = None
 ) -> list[Bin]:
     """Return bins in the alert window, excluding any dismissed for the current alert."""
-    active_notifs = list(filter(lambda x: x.is_active(start_time, end_time), bins))
+    active_notifs = list(filter(lambda x: x.is_active(), bins))
 
     if dismiss_time is not None:
         # Keep only bins whose alert window had not started yet at dismiss time.
         dismiss_epoch = time.mktime(dismiss_time)
         active_notifs = list(
             filter(
-                lambda x: time.mktime(x.next_collection_date) - start_time > dismiss_epoch,
+                lambda x: time.mktime(x.next_collection_date) > dismiss_epoch,
                 active_notifs,
             )
         )
@@ -127,27 +127,38 @@ def get_active_notifications(
     return active_notifs
 
 
-def get_next_wake_time(notifications: list[Bin]) -> struct_time:
-    """Return the earliest collection time strictly in the future.
+def get_next_wake_time(
+    notifications: list[Bin], active_notifs: list[Bin]
+) -> struct_time:
+    """Return the soonest future wake time.
 
-    Collection dates on/before now are stepped forward by frequency so deep
-    sleep never arms a past TimeAlarm (which would reboot-loop).
+    When bins are active, wake at the nearest next_collection_end_date so lights turn off.
+    Otherwise wake at the nearest alert start (next_collection_date).
     """
     if not notifications:
         raise ValueError("cannot schedule wake with no notifications")
 
     now = time.time()
     soonest = None
-    for entry in notifications:
-        epoch = time.mktime(entry.next_collection_date)
-        freq = entry.collection_frequency
-        if freq > 0:
-            while epoch <= now:
-                epoch += freq
-        elif epoch <= now:
-            continue
-        if soonest is None or epoch < soonest:
-            soonest = epoch
+
+    if active_notifs:
+        for entry in active_notifs:
+            epoch = time.mktime(entry.next_collection_end_date)
+            if epoch <= now:
+                continue
+            if soonest is None or epoch < soonest:
+                soonest = epoch
+    else:
+        for entry in notifications:
+            epoch = time.mktime(entry.next_collection_date)
+            freq = entry.collection_frequency
+            if freq > 0:
+                while epoch <= now:
+                    epoch += freq
+            elif epoch <= now:
+                continue
+            if soonest is None or epoch < soonest:
+                soonest = epoch
 
     if soonest is None:
         raise ValueError("cannot schedule wake with no future collection")

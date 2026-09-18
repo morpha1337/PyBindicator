@@ -289,7 +289,7 @@ flowchart TD
 
 **Clock sync** (`helpers.needs_clock_sync`): Wi-Fi + NTP run on cold boot (`WakeSource.POWER`), when `last_clock_sync` is missing, or when that stamp is older than `time.clock_sync_interval_days` (default 30). Otherwise TIME/BUTTON wakes reuse the RTC.
 
-**Alert window** (default in `config.py`): from **12:00 the day before** collection through **12:00 on collection day**. A bin is “active” when the current time falls in that window relative to its next collection date.
+**Alert window** (per bin in `secrets['bins']`): `start_date` through `end_date` (full encoded datetimes, hour included). Stored on `Bin` as `next_collection_date` / `next_collection_end_date`. A bin is “active” when now is in `[start, end)`.
 
 **Wake sources during sleep:** `TimeAlarm` (next scheduled check) and optionally `PinAlarm` on the button (when `time.use_external_wake_up` is true).
 
@@ -305,11 +305,11 @@ flowchart TD
    - BUTTON → clear stale notifications.
    - POWER → leave notifications as loaded.
 5. If no bins in NVM → seed from `secrets['bins']` via `model.bin.convert_json_to_bin`.
-6. Filter active bins by alert window (`TimeController.alert_begin` / `alert_end` vs collection date).
+6. Filter active bins by each bin's `next_collection_date` / `next_collection_end_date` alert window.
 7. Display on GlowBit (`GlowBitController.show_notifications`) or turn off.
-8. Compute next wake time, persist state to NVM (including `last_clock_sync`), deep sleep until alarm or button.
+8. Compute next wake time (nearest `next_collection_end_date` when active, else nearest `next_collection_date`), persist state to NVM (including `last_clock_sync`), deep sleep until alarm or button.
 
-Alert window defaults (in `config.py`): lights from **12:00** the day before collection through **12:00** on collection day (24 h clock).
+Alert windows are per-bin in `secrets['bins']`: `start_date` (window begin) and `end_date` (window end), both full encoded datetimes; loaded onto `Bin` as `next_collection_date` / `next_collection_end_date`.
 
 ## Controllers
 
@@ -341,7 +341,6 @@ Other councils use different colors — adjust `councils.monash.get_bin_color` o
 
 - `timezone_offset` — hours from UTC for NTP
 - `glowbit.brightness` — 0.0–1.0 NeoPixel brightness
-- `time.alert_begin` / `alert_end` — alert window strings (`"HH:MM"`)
 - `time.use_external_wake_up` — include button `PinAlarm` in sleep
 - `time.clock_sync_interval_days` — force Wi-Fi/NTP if `last_clock_sync` is older than this (default 30)
 - `wifi.retries` / `timeout` — connection attempts and station timeout (ms)
@@ -361,7 +360,8 @@ secrets = {
         {
             'label': 'Landfill Waste',
             'color': (255, 0, 0),         # RGB tuple — required by Bin
-            'start_date': 'YYYY/MM/DD/H/M/S/wday/yday/isdst',
+            'start_date': 'YYYY/MM/DD/H/M/S/wday/yday/isdst',  # alert begin
+            'end_date': 'YYYY/MM/DD/H/M/S/wday/yday/isdst',    # alert end
             'frequency_in_days': 14
         },
         # ...

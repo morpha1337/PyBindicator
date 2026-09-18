@@ -30,9 +30,10 @@ def parse_collection_date(date_text: str) -> struct_time:
 
 
 def test_bin_data(bin_data: dict, wifi_controller: WifiController) -> list[Bin]:
+    now = time.localtime(time.time())
     bins = [
-        Bin("Landfill Waste", time.localtime(time.time()), RED, 0),
-        Bin("Food and Garden Waste", time.localtime(time.time()), GREEN, 0),
+        Bin("Landfill Waste", now, RED, 0, now),
+        Bin("Food and Garden Waste", now, GREEN, 0, now),
     ]
     return bins
 
@@ -60,8 +61,10 @@ def get_bin_data(bin_data: dict, wifi_controller: WifiController) -> list[Bin]:
         if not date_nodes:
             raise Exception("Missing next-service date for %s" % label)
         collection_date = parse_collection_date(element_text(date_nodes[0]))
+        # Debug-only window: midnight → noon on collection day.
+        end_date = localtime(mktime(collection_date) + 12 * 60 * 60)
 
-        bins.append(Bin(label, collection_date, get_bin_color(label), 0))
+        bins.append(Bin(label, collection_date, get_bin_color(label), 0, end_date))
 
     return bins
 

@@ -1,4 +1,4 @@
-"""Time conversion, alert-window math, and wake-reason helpers."""
+"""Time conversion and wake-reason helpers."""
 
 from __future__ import annotations
 
@@ -60,18 +60,6 @@ def format_struct_time(value: Optional[struct_time]) -> str:
         value.tm_min,
         value.tm_sec,
     )
-
-
-def convert_start_time_to_seconds(value: str) -> int:
-    """Convert HH:MM alert_begin to seconds before midnight on collection day."""
-    raw_time = value.split(":")
-    return (24 - int(raw_time[0])) * 60 * 60 + int(raw_time[1]) * 60
-
-
-def convert_end_time_to_seconds(value: str) -> int:
-    """Convert HH:MM alert_end to seconds after midnight on collection day."""
-    raw_time = value.split(":")
-    return int(raw_time[0]) * 60 * 60 + int(raw_time[1]) * 60
 
 
 def get_wake_source() -> str:
