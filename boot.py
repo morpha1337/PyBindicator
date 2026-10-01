@@ -25,4 +25,3 @@ if alarm.wake_alarm is None:
     storage.remount("/", readonly=not button.value)
 else:
     storage.remount("/", False)
-``
